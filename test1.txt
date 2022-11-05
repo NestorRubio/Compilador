@@ -1,0 +1,27 @@
+program Cale1;
+
+var float boba, memo, santi, pucha;
+var int saof, paro2;
+var bool si, no;
+
+func int Dedos(){
+    print("popo")
+    b = 5+7.5/8 < 9*7;
+    return boba;
+}
+
+func float Jale(int paro2, char chango, float crico, bool paro1){
+    return ball && safi;
+}
+/*
+Este es un comentario multilinea
+*/
+func void condi(){
+
+    return 0;
+}
+
+void main(){
+    Dedos()
+    Jale(chola, ouija, perro, narco)
+}
