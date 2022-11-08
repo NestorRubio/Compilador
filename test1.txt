@@ -6,12 +6,12 @@ var bool si, no;
 
 func int Dedos(){
     print("popo")
-    b = 5+7.5/8 < 9*7;
+    boba = 5 - -7.5 / 8 < 9 * 7;
     return boba;
 }
 
 func float Jale(int paro2, char chango, float crico, bool paro1){
-    return ball && safi;
+    return paro2 && crico;
 }
 /*
 Este es un comentario multilinea
@@ -23,5 +23,5 @@ func void condi(){
 
 void main(){
     Dedos()
-    Jale(chola, ouija, perro, narco)
+    Jale(saof, si, no, mayo)
 }

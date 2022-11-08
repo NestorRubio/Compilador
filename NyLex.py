@@ -30,6 +30,7 @@ tokens = [
     'CTE_INT',
     'CTE_FLT',
     'CTE_STR',
+    'CTE_CHAR',
     'COMMENT'
 ]
 
@@ -63,7 +64,7 @@ def t_ID(t):
     return t
 
 def t_CTE_FLT(t):
-    r'\d+\.\d+'
+    r'[-]?\d+\.\d+'
     try:
         t.value = float(t.value)
     except ValueError:
@@ -72,7 +73,7 @@ def t_CTE_FLT(t):
     return t
 
 def t_CTE_INT(t):
-    r'\d+'
+    r'[-]?\d+'
     try:
         t.value = int(t.value)
     except ValueError:
@@ -82,6 +83,10 @@ def t_CTE_INT(t):
 
 def t_CTE_STR(t):
     r'\"[^\"\~]*\"'
+    return t
+
+def t_CTE_CHAR(t):
+    r'[a-zA-Z]'
     return t
 
 def t_COMMENT(t):

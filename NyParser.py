@@ -2,12 +2,14 @@ import ply.yacc as yacc
 import sys
 import pprint
 
+from NySemantics import cuboSemantico 
+
 from NyLex import tokens
 
 
 pOperands = []
-pTypes = []
 pOperators = []
+constTable = {}
 
 
 #GRAMATICA
@@ -167,8 +169,8 @@ def p_EXPRESION(p):
 
 def p_EXPRESION_P(p):
     '''
-    EXPRESION_P : OR EXPR
-                | AND EXPR
+    EXPRESION_P : OR pila_operadores_add EXPR
+                | AND pila_operadores_add EXPR
                 | empty
     '''
 
@@ -179,24 +181,24 @@ def p_EXPR(p):
 
 def p_EXPR_P(p):
     '''
-    EXPR_P : LT EXP
-           | GT EXP
-           | DIFF EXP
-           | LTE EXP
-           | GTE EXP
-           | EQUAL EXP
+    EXPR_P : LT pila_operadores_add EXP
+           | GT pila_operadores_add EXP
+           | DIFF pila_operadores_add EXP
+           | LTE pila_operadores_add EXP
+           | GTE pila_operadores_add EXP
+           | EQUAL pila_operadores_add EXP
            | empty
     '''
 
 def p_EXP(p):
     '''
-    EXP : TERM EXP_P
+    EXP : TERM  EXP_P
     '''
 
 def p_EXP_P(p):
     '''
-    EXP_P : MAS TERM EXP_P
-          | MENOS TERM EXP_P
+    EXP_P : MAS pila_operadores_add TERM EXP_P
+          | MENOS pila_operadores_add TERM EXP_P
           | empty
     '''
 
@@ -207,29 +209,30 @@ def p_TERM(p):
 
 def p_TERM_P(p):
     '''
-    TERM_P : MULT  FACTOR TERM_P
-           | DIV FACTOR TERM_P
+    TERM_P : MULT pila_operadores_add FACTOR TERM_P
+           | DIV pila_operadores_add FACTOR TERM_P
            | empty
     '''
 
 def p_FACTOR(p):
     '''
-    FACTOR : PARIZQ EXPRESION PARDER
+    FACTOR : PARIZQ pila_operadores_add EXPRESION PARDER pila_operadores_add
            | FACTOR_P VAR_CTE
     '''
 
 def p_FACTOR_P(p):
     '''
-    FACTOR_P : MAS
-             | MENOS
+    FACTOR_P : MAS pila_operadores_add
+             | MENOS pila_operadores_add
              | empty
     '''
 
 def p_VAR_CTE(p):
     '''
-    VAR_CTE : ID
-            | CTE_INT
-            | CTE_FLT
+    VAR_CTE : ID pila_operando_id
+            | CTE_INT pila_operando_int
+            | CTE_FLT pila_operando_float
+            | CTE_CHAR pila_operando_char
     '''
 
 def p_empty(p):
@@ -242,21 +245,24 @@ def p_error(p):
     sys.exit()
 
 #DIRECCIONES DE MEMORIA VIRTUAL
-GLOBAL_INT_ADDR = 5000
-MODULE_INT_ADDR = 7000
-CTE_INT_ADDR = 9000
+global_int_addr = 5000
+module_int_addr = 7000
+cte_int_addr = 9000
+temp_int_addr = 11000
 
-GLOBAL_FLOAT_ADDR = 11000
-MODULE_FLOAT_ADDR = 13000
-CTE_FLOAT_ADDR = 15000
+global_float_addr = 13000
+module_float_addr = 15000
+cte_float_addr = 17000
+temp_float_addr = 19000
 
-GLOBAL_BOOL_ADDR = 17000
-MODULE_BOOL_ADDR = 19000
-CTE_BOOL_ADDR = 21000
+global_bool_addr = 21000
+module_bool_addr = 23000
+temp_bool_addr = 25000
 
-GLOBAL_CHAR_ADDR = 23000
-MODULE_CHAR_ADDR = 25000
-CTE_CHAR_ADDR = 27000
+global_char_addr = 27000
+module_char_addr = 29000
+cte_char_addr = 31000
+temp_char_addr = 33000
 
 #ESPACIO DE MEMORIA DEFAULT DE TIPOS DE DATOS
 INT_MEM_SIZE = 32
@@ -286,7 +292,7 @@ def p_ADD_VAR(p):
     global currentId, currentType
     currentId = p[-1]
     if(dirFunc[currentFunc]['symbolTable'].get(currentId) == None):
-       dirFunc[currentFunc]['symbolTable'][currentId] = {'name' : currentId, 'type' : currentType, 'address' : 0, 'size' : 0}
+       dirFunc[currentFunc]['symbolTable'][currentId] = {'name' : currentId, 'type' : currentType, 'address' : 0, 'dim' : 0}
     else:
         print('multiple variables cannot have the same name in the same scope', currentId)
         sys.exit()
@@ -301,16 +307,46 @@ def p_ADD_FUNC(p):
         print('more than one function declared with ', currentFunc, ' name')
         sys.exit()
 
-def p_ID_CUAD(p):
-    'ID_CUAD :'
-   # idName = p[-1]
-   # idType = dirFunc[currentFunc]['symbolTable'][idName].get('type')
-   # idAddress = dirFunc[currentFunc]['symbolTable'][idName].get('address')
-   # pOperands.append({'idName' : idName, 'idType' : idType, 'idAddress' : idAddress})
+def p_pila_operando_id(p):
+    'pila_operando_id :'
+    global currentFunc, pOperands, dirFunc
+    idName = p[-1]
+    if(idName in dirFunc[currentFunc]['symbolTable']):     
+        idType = dirFunc[currentFunc]['symbolTable'][idName].get('type')
+        idAddress = dirFunc[currentFunc]['symbolTable'][idName].get('address')
+    elif(idName in dirFunc['global']['symbolTable']):
+        idType = dirFunc['global']['symbolTable'][idName].get('type')
+        idAddress = dirFunc['global']['symbolTable'][idName].get('address')
+    else:
+        print('Variable ' + idName + ' address not found in global nor ' + currentFunc) 
+        sys.exit()
 
+    pOperands.append({'name' : idName, 'type' : idType, 'address' : idAddress})
 
+def p_pila_operando_int(p):
+    'pila_operando_int :'
+    global currentFunc, pOperands, dirFunc
+    idName = p[-1]
+    pOperands.append({'name' : idName, 'type' : 'int', 'address' : 0})
 
+def p_pila_operando_float(p):
+    'pila_operando_float :'
+    global currentFunc, pOperands, dirFunc
+    idName = p[-1]
+    pOperands.append({'name' : idName, 'type' : 'float', 'address' : 0})
 
+def p_pila_operando_char(p):
+    'pila_operando_char :'
+    idName = p[-1]
+    pOperands.append({'name' : idName, 'type' : 'char', 'address' : 0})
+
+def p_pila_operadores_add(p):
+    'pila_operadores_add :'
+    operador = p[-1]
+    pOperators.append(operador)
+
+#def p_ver_exp_p(p):
+#   if(str(pOperators[-1]) ==  )
 
 parser = yacc.yacc()
 f = open("./test1.txt", "r")
@@ -318,5 +354,6 @@ input = f.read()
 print(input)
 parser.parse(input)
 pprint.pprint(dirFunc)
-
+pprint.pprint(pOperands)
+pprint.pprint(pOperators)
 
