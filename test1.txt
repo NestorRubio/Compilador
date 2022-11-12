@@ -4,24 +4,12 @@ var float boba, memo, santi, pucha;
 var int saof, paro2;
 var bool si, no;
 
-func int Dedos(){
-    print("popo")
-    boba = 5 - -7.5 / 8 < 9 * 7;
-    return boba;
-}
+func int condi(){
 
-func float Jale(int paro2, char chango, float crico, bool paro1){
-    return paro2 && crico;
-}
-/*
-Este es un comentario multilinea
-*/
-func void condi(){
-
-    return 0;
+    memo = 6 / (5 + 8) * 2;
+    si = memo > 4 && 1 <= 3 || memo < 8 && paro2 != pucha;
+    return si;
 }
 
 void main(){
-    Dedos()
-    Jale(saof, si, no, mayo)
 }

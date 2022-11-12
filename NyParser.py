@@ -2,7 +2,8 @@ import ply.yacc as yacc
 import sys
 import pprint
 
-from NySemantics import cuboSemantico 
+from NySemantics import cuboSemantico
+import Direcciones as dir
 
 from NyLex import tokens
 
@@ -10,6 +11,8 @@ from NyLex import tokens
 pOperands = []
 pOperators = []
 constTable = {}
+cuadruplos = []
+tabla_var_dim = []
 
 
 #GRAMATICA
@@ -44,7 +47,7 @@ def p_VARS_PPP(p):
 
 def p_FUNCS(p):
     '''
-    FUNCS : FUNC TYPE_P ID ADD_FUNC PARIZQ PARAMS PARDER LLVEIZQ ESTATUTO_P RETURN EXPRESION PTOCOMA LLVEDER
+    FUNCS : FUNC TYPE_P ID ADD_FUNC PARIZQ PARAMS PARDER LLVEIZQ ESTATUTO_P RETURN EXPRESION cuad_return PTOCOMA LLVEDER
     '''
 
 def p_FUNCS_P(p):
@@ -101,8 +104,7 @@ def p_ESTATUTO_P(p):
 
 def p_ASIGNACION(p):
     '''
-    ASIGNACION : ID ASIGN EXPRESION PTOCOMA
-               | ID ASIGN FUNC_CALL
+    ASIGNACION : ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA 
     '''
 
 def p_CONDICION(p):
@@ -164,68 +166,68 @@ def p_PARM_PP(p):
 
 def p_EXPRESION(p):
     '''
-    EXPRESION : EXPR EXPRESION_P
+    EXPRESION : EXPRE cuad_or OR pila_operadores_add EXPRESION
+              | EXPRE cuad_or 
     '''
 
-def p_EXPRESION_P(p):
+def p_EXPRE(p):
     '''
-    EXPRESION_P : OR pila_operadores_add EXPR
-                | AND pila_operadores_add EXPR
-                | empty
+    EXPRE : EXPR cuad_and AND pila_operadores_add EXPRE
+          | EXPR cuad_and
     '''
 
 def p_EXPR(p):
     '''
-    EXPR : EXP EXPR_P
+    EXPR : EXP cuad_comp EXPR_P
     '''
 
 def p_EXPR_P(p):
     '''
-    EXPR_P : LT pila_operadores_add EXP
-           | GT pila_operadores_add EXP
-           | DIFF pila_operadores_add EXP
-           | LTE pila_operadores_add EXP
-           | GTE pila_operadores_add EXP
-           | EQUAL pila_operadores_add EXP
+    EXPR_P : LT pila_operadores_add EXPR
+           | GT pila_operadores_add EXPR
+           | DIFF pila_operadores_add EXPR
+           | LTE pila_operadores_add EXPR
+           | GTE pila_operadores_add EXPR
+           | EQUAL pila_operadores_add EXPR
            | empty
     '''
 
 def p_EXP(p):
     '''
-    EXP : TERM  EXP_P
+    EXP : TERM cuad_sumres EXP_P
     '''
 
 def p_EXP_P(p):
     '''
-    EXP_P : MAS pila_operadores_add TERM EXP_P
-          | MENOS pila_operadores_add TERM EXP_P
+    EXP_P : MAS pila_operadores_add EXP
+          | MENOS pila_operadores_add EXP
           | empty
     '''
 
 def p_TERM(p):
     '''
-    TERM : FACTOR TERM_P
+    TERM : FACTOR cuad_muldiv TERM_P
     '''
 
 def p_TERM_P(p):
     '''
-    TERM_P : MULT pila_operadores_add FACTOR TERM_P
-           | DIV pila_operadores_add FACTOR TERM_P
+    TERM_P : MULT pila_operadores_add TERM
+           | DIV pila_operadores_add TERM
            | empty
     '''
 
 def p_FACTOR(p):
     '''
-    FACTOR : PARIZQ pila_operadores_add EXPRESION PARDER pila_operadores_add
-           | FACTOR_P VAR_CTE
+    FACTOR : PARIZQ fondo_falso_add EXPRESION PARDER fondo_falso_pop
+            | VAR_CTE
     '''
 
-def p_FACTOR_P(p):
-    '''
-    FACTOR_P : MAS pila_operadores_add
-             | MENOS pila_operadores_add
-             | empty
-    '''
+#def p_FACTOR_P(p):
+#    '''
+#    FACTOR_P : MAS pila_operadores_add
+#             | MENOS pila_operadores_add
+#             | empty
+#    '''
 
 def p_VAR_CTE(p):
     '''
@@ -245,24 +247,14 @@ def p_error(p):
     sys.exit()
 
 #DIRECCIONES DE MEMORIA VIRTUAL
+
 global_int_addr = 5000
-module_int_addr = 7000
-cte_int_addr = 9000
-temp_int_addr = 11000
-
 global_float_addr = 13000
-module_float_addr = 15000
-cte_float_addr = 17000
-temp_float_addr = 19000
+global_char_addr = 21000
+global_bool_addr = 29000
 
-global_bool_addr = 21000
-module_bool_addr = 23000
-temp_bool_addr = 25000
+asigna_direccion = dir.Direcciones(global_int_addr, global_float_addr, global_char_addr, global_bool_addr)
 
-global_char_addr = 27000
-module_char_addr = 29000
-cte_char_addr = 31000
-temp_char_addr = 33000
 
 #ESPACIO DE MEMORIA DEFAULT DE TIPOS DE DATOS
 INT_MEM_SIZE = 32
@@ -280,7 +272,7 @@ currentType = 'void'
 def p_CREATE_DIRFUNC(p):
     'CREATE_DIRFUNC :'
     global currentFunc, currentType
-    dirFunc[currentFunc] = {'type' : currentType, 'symbolTable' : {}, 'start_Address' : 0, 'memSize' : 0}
+    dirFunc[currentFunc] = {'type' : currentType, 'varsTable' : {}, 'start_Address' : 0, 'memSize' : 0}
 
 def p_CURR_TYPE(p):
     'CURR_TYPE :'
@@ -289,10 +281,14 @@ def p_CURR_TYPE(p):
 
 def p_ADD_VAR(p):
     'ADD_VAR :'
-    global currentId, currentType
+    global currentId, currentType, asigna_direccion
     currentId = p[-1]
-    if(dirFunc[currentFunc]['symbolTable'].get(currentId) == None):
-       dirFunc[currentFunc]['symbolTable'][currentId] = {'name' : currentId, 'type' : currentType, 'address' : 0, 'dim' : 0}
+    if(dirFunc[currentFunc]['varsTable'].get(currentId) == None):
+        if(currentFunc == 'global'):
+            addr = asigna_direccion.global_var_addr(currentType)
+        else:
+            addr = asigna_direccion.module_var_addr(currentType)
+        dirFunc[currentFunc]['varsTable'][currentId] = {'name' : currentId, 'type' : currentType, 'address' : addr, 'dim' : 0}
     else:
         print('multiple variables cannot have the same name in the same scope', currentId)
         sys.exit()
@@ -302,7 +298,7 @@ def p_ADD_FUNC(p):
     global currentFunc, currentType
     currentFunc = p[-1]
     if(dirFunc.get(currentFunc) == None):
-      dirFunc[currentFunc] = {'type' : currentType, 'symbolTable' : {}, 'start_Address' : 0, 'memSize' : 0}
+      dirFunc[currentFunc] = {'type' : currentType, 'varsTable' : {}, 'start_Address' : 0, 'memSize' : 0}
     else:
         print('more than one function declared with ', currentFunc, ' name')
         sys.exit()
@@ -311,12 +307,12 @@ def p_pila_operando_id(p):
     'pila_operando_id :'
     global currentFunc, pOperands, dirFunc
     idName = p[-1]
-    if(idName in dirFunc[currentFunc]['symbolTable']):     
-        idType = dirFunc[currentFunc]['symbolTable'][idName].get('type')
-        idAddress = dirFunc[currentFunc]['symbolTable'][idName].get('address')
-    elif(idName in dirFunc['global']['symbolTable']):
-        idType = dirFunc['global']['symbolTable'][idName].get('type')
-        idAddress = dirFunc['global']['symbolTable'][idName].get('address')
+    if(idName in dirFunc[currentFunc]['varsTable']):     
+        idType = dirFunc[currentFunc]['varsTable'][idName].get('type')
+        idAddress = dirFunc[currentFunc]['varsTable'][idName].get('address')
+    elif(idName in dirFunc['global']['varsTable']):
+        idType = dirFunc['global']['varsTable'][idName].get('type')
+        idAddress = dirFunc['global']['varsTable'][idName].get('address')
     else:
         print('Variable ' + idName + ' address not found in global nor ' + currentFunc) 
         sys.exit()
@@ -325,28 +321,114 @@ def p_pila_operando_id(p):
 
 def p_pila_operando_int(p):
     'pila_operando_int :'
-    global currentFunc, pOperands, dirFunc
+    global currentFunc, pOperands, dirFunc, asigna_direccion, constTable
     idName = p[-1]
-    pOperands.append({'name' : idName, 'type' : 'int', 'address' : 0})
+    addr = asigna_direccion.cte_var_addr('int')
+    if(p[-1] not in constTable):
+        constTable[p[-1]] = { 'address' : addr, 'type' : 'int'}
+    pOperands.append({'name' : idName, 'type' : 'int', 'address' : addr})
 
 def p_pila_operando_float(p):
     'pila_operando_float :'
-    global currentFunc, pOperands, dirFunc
+    global currentFunc, pOperands, dirFunc, asigna_direccion
     idName = p[-1]
-    pOperands.append({'name' : idName, 'type' : 'float', 'address' : 0})
+    addr = asigna_direccion.cte_var_addr('float')
+    if(p[-1] not in constTable):
+        constTable[p[-1]] = { 'address' : addr, 'type' : 'float'}
+    pOperands.append({'name' : idName, 'type' : 'float', 'address' : addr})
 
 def p_pila_operando_char(p):
     'pila_operando_char :'
+    global currentFunc, pOperands, dirFunc, asigna_direccion
     idName = p[-1]
-    pOperands.append({'name' : idName, 'type' : 'char', 'address' : 0})
+    addr = asigna_direccion.cte_var_addr('char')
+    if(p[-1] not in constTable):
+        constTable[p[-1]] = { 'address' : addr, 'type' : 'char'}
+    pOperands.append({'name' : idName, 'type' : 'char', 'address' : addr})
 
 def p_pila_operadores_add(p):
     'pila_operadores_add :'
     operador = p[-1]
     pOperators.append(operador)
 
-#def p_ver_exp_p(p):
-#   if(str(pOperators[-1]) ==  )
+def p_fondo_falso_add(p):
+    'fondo_falso_add :'
+    global pOperators
+    pOperators.append('(')
+
+def p_fondo_falso_pop(p):
+    'fondo_falso_pop :'
+    global pOperators
+    if(pOperators[-1] == '('):
+        pOperators.pop()
+    else:
+        print("parentheses mismatch")
+        sys.exit()
+
+def p_cuad_and(p):
+    'cuad_and :'
+    cuad_gen(['&&'])
+
+def p_cuad_or(p):
+    'cuad_or :'
+    cuad_gen(['||'])
+
+
+def p_cuad_comp(p):
+    'cuad_comp :'
+    cuad_gen(['>', '>=', '<', '<=', '!=', '=='])
+
+
+def p_cuad_sumres(p):
+    'cuad_sumres :'
+    cuad_gen(['+', '-'])
+
+
+def p_cuad_muldiv(p):
+    'cuad_muldiv :'
+    cuad_gen(['/', '*'])
+
+def p_cuad_asign(p):
+    'cuad_asign :'
+    global pOperands, pOperators, cuboSemantico, cuadruplos, currentType, currentFunc
+    operando = pOperands.pop()
+    resType = operando['type']
+    res = operando['address']
+    idOp = pOperands.pop()
+    idType = idOp['type']
+    id = idOp['address']
+    operator = pOperators.pop()
+    asign_ver = cuboSemantico[idType][resType][operator]
+    if(asign_ver != 'err' and operator == '='):
+        cuadruplos.append([operator, res, '', id])
+    else:
+        print("Type mismatch", idOp['name'], idType, operando['name'], operando['type'], operator)
+        sys.exit()
+
+
+def cuad_gen(op):
+    global pOperands, pOperators, cuboSemantico, cuadruplos
+    if(len(pOperators) > 0):
+        if(pOperators[-1] in op):
+            right_operando = pOperands.pop()
+            left_operando = pOperands.pop()
+            operator = pOperators.pop()
+            resType = cuboSemantico[left_operando['type']][right_operando['type']][operator]
+            if(resType != 'err'):
+                addr = asigna_direccion.temp_var_addr(resType)
+                cuadruplos.append([operator, left_operando, right_operando, addr])
+                pOperands.append({'address' : addr, 'name' : 'temp', 'type' : resType })
+            else:
+                print("Type Mismatch", right_operando['name'], right_operando['type'], left_operando['name'], left_operando['type'], operator)
+                sys.exit()
+
+def p_cuad_return(p):
+    'cuad_return :'
+    global pOperands, pOperators, cuboSemantico, cuadruplos, currentFunc, dirFunc
+    ret = pOperands.pop()
+    funcType = dirFunc[currentFunc]['type']
+    if(ret['type'] == funcType):
+        cuadruplos.append(['RET', '-', '-', ret])
 
 parser = yacc.yacc()
 f = open("./test1.txt", "r")
@@ -356,4 +438,5 @@ parser.parse(input)
 pprint.pprint(dirFunc)
 pprint.pprint(pOperands)
 pprint.pprint(pOperators)
-
+pprint.pprint(constTable)
+pprint.pprint(cuadruplos)
