@@ -48,7 +48,7 @@ palabrasResv = {
     'main' : 'MAIN',
     'if' : 'IF',
     'else' : 'ELSE',
-    'for' : 'FOR',
+    'while' : 'WHILE',
     'print' : 'PRINT',
     'func' : 'FUNC'
 }

@@ -34,20 +34,20 @@ Rule 22    PARAMS_P -> empty
 Rule 23    MAIN_G -> VOID MAIN PARIZQ PARDER LLVEIZQ ESTATUTO_P LLVEDER
 Rule 24    ESTATUTO -> ASIGNACION
 Rule 25    ESTATUTO -> CONDICION
-Rule 26    ESTATUTO -> LOOP_FOR
+Rule 26    ESTATUTO -> LOOP_WHILE
 Rule 27    ESTATUTO -> ESCRITURA
 Rule 28    ESTATUTO -> FUNC_CALL
 Rule 29    ESTATUTO_P -> ESTATUTO ESTATUTO_P
 Rule 30    ESTATUTO_P -> empty
 Rule 31    ASIGNACION -> ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
-Rule 32    CONDICION -> IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
-Rule 33    CONDICION_P -> ELSE LLVEIZQ ESTATUTO_P LLVEDER
-Rule 34    CONDICION_P -> empty
-Rule 35    LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
-Rule 36    ESCRITURA -> PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER
-Rule 37    PRINTABLE -> EXPRESION
-Rule 38    PRINTABLE -> CTE_STR
-Rule 39    PRINTABLE_P -> COMMA PRINTABLE PRINTABLE_P
+Rule 32    CONDICION -> IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+Rule 33    CONDICION_P -> ELSE else_jump LLVEIZQ ESTATUTO_P LLVEDER if_end
+Rule 34    CONDICION_P -> if_end
+Rule 35    LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
+Rule 36    ESCRITURA -> PRINT PARIZQ PRINTABLE PARDER
+Rule 37    PRINTABLE -> EXPRESION cuad_print PRINTABLE_P
+Rule 38    PRINTABLE -> CTE_STR cuad_print_str PRINTABLE_P
+Rule 39    PRINTABLE_P -> COMMA PRINTABLE
 Rule 40    PRINTABLE_P -> empty
 Rule 41    FUNC_CALL -> ID PARIZQ PARM PARDER
 Rule 42    PARM -> PARM_P
@@ -102,6 +102,14 @@ Rule 90    cuad_sumres -> <empty>
 Rule 91    cuad_muldiv -> <empty>
 Rule 92    cuad_asign -> <empty>
 Rule 93    cuad_return -> <empty>
+Rule 94    ver_if -> <empty>
+Rule 95    if_end -> <empty>
+Rule 96    else_jump -> <empty>
+Rule 97    add_jump -> <empty>
+Rule 98    ver_while -> <empty>
+Rule 99    while_end -> <empty>
+Rule 100   cuad_print -> <empty>
+Rule 101   cuad_print_str -> <empty>
 
 Terminals, with rules where they appear
 
@@ -109,13 +117,13 @@ AND                  : 51
 ASIGN                : 31
 BOOL                 : 15
 CHAR                 : 16
-COMMA                : 6 21 35 35 39 47
+COMMA                : 6 21 39 47
 COMMENT              : 
 CORDER               : 3 8
 CORIZQ               : 3 8
 CTE_CHAR             : 74
 CTE_FLT              : 45 73
-CTE_INT              : 3 8 35 35 35 44 72
+CTE_INT              : 3 8 44 72
 CTE_STR              : 38
 DIFF                 : 56
 DIV                  : 67
@@ -123,7 +131,6 @@ DOSPTOS              :
 ELSE                 : 33
 EQUAL                : 59
 FLOAT                : 14
-FOR                  : 35
 FUNC                 : 10
 GT                   : 55
 GTE                  : 58
@@ -149,6 +156,7 @@ PUNTO                :
 RETURN               : 10
 VAR                  : 2
 VOID                 : 18 23
+WHILE                : 35
 error                : 
 
 Nonterminals, with rules where they appear
@@ -166,14 +174,14 @@ ESTATUTO_P           : 10 23 29 32 33 35
 EXP                  : 53 62 63
 EXPR                 : 51 52 54 55 56 57 58 59
 EXPRE                : 49 50 51
-EXPRESION            : 10 31 32 37 49 69
+EXPRESION            : 10 31 32 35 37 49 69
 EXPR_P               : 53
 EXP_P                : 61
 FACTOR               : 65
 FUNCS                : 11
 FUNCS_P              : 1 11
 FUNC_CALL            : 28
-LOOP_FOR             : 26
+LOOP_WHILE           : 26
 MAIN_G               : 1
 PARAMS               : 10
 PARAMS_P             : 19 21
@@ -181,7 +189,7 @@ PARM                 : 41
 PARM_P               : 42 47
 PARM_PP              : 44 45 46
 PRINTABLE            : 36 39
-PRINTABLE_P          : 36 39
+PRINTABLE_P          : 37 38
 PROGRAMA             : 0
 TERM                 : 61 66 67
 TERM_P               : 65
@@ -192,21 +200,29 @@ VARS_P               : 1 4
 VARS_PP              : 2 6
 VARS_PPP             : 3
 VAR_CTE              : 70
+add_jump             : 35
 cuad_and             : 51 52
 cuad_asign           : 31
 cuad_comp            : 53
 cuad_muldiv          : 65
 cuad_or              : 49 50
+cuad_print           : 37
+cuad_print_str       : 38
 cuad_return          : 10
 cuad_sumres          : 61
-empty                : 5 7 9 12 20 22 30 34 40 43 48 60 64 68
+else_jump            : 33
+empty                : 5 7 9 12 20 22 30 40 43 48 60 64 68
 fondo_falso_add      : 69
 fondo_falso_pop      : 69
+if_end               : 33 34
 pila_operadores_add  : 31 49 51 54 55 56 57 58 59 62 63 66 67
 pila_operando_char   : 74
 pila_operando_float  : 73
 pila_operando_id     : 31 71
 pila_operando_int    : 72
+ver_if               : 32
+ver_while            : 35
+while_end            : 35
 
 Parsing method: LALR
 
@@ -687,20 +703,20 @@ state 50
     (30) ESTATUTO_P -> . empty
     (24) ESTATUTO -> . ASIGNACION
     (25) ESTATUTO -> . CONDICION
-    (26) ESTATUTO -> . LOOP_FOR
+    (26) ESTATUTO -> . LOOP_WHILE
     (27) ESTATUTO -> . ESCRITURA
     (28) ESTATUTO -> . FUNC_CALL
     (75) empty -> .
     (31) ASIGNACION -> . ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
-    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
-    (35) LOOP_FOR -> . FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
-    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER
+    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    (35) LOOP_WHILE -> . WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
+    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PARDER
     (41) FUNC_CALL -> . ID PARIZQ PARM PARDER
 
     LLVEDER         reduce using rule 75 (empty -> .)
     ID              shift and go to state 66
     IF              shift and go to state 67
-    FOR             shift and go to state 68
+    WHILE           shift and go to state 68
     PRINT           shift and go to state 69
 
     ESTATUTO_P                     shift and go to state 58
@@ -708,7 +724,7 @@ state 50
     empty                          shift and go to state 60
     ASIGNACION                     shift and go to state 61
     CONDICION                      shift and go to state 62
-    LOOP_FOR                       shift and go to state 63
+    LOOP_WHILE                     shift and go to state 63
     ESCRITURA                      shift and go to state 64
     FUNC_CALL                      shift and go to state 65
 
@@ -781,21 +797,21 @@ state 59
     (30) ESTATUTO_P -> . empty
     (24) ESTATUTO -> . ASIGNACION
     (25) ESTATUTO -> . CONDICION
-    (26) ESTATUTO -> . LOOP_FOR
+    (26) ESTATUTO -> . LOOP_WHILE
     (27) ESTATUTO -> . ESCRITURA
     (28) ESTATUTO -> . FUNC_CALL
     (75) empty -> .
     (31) ASIGNACION -> . ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
-    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
-    (35) LOOP_FOR -> . FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
-    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER
+    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    (35) LOOP_WHILE -> . WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
+    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PARDER
     (41) FUNC_CALL -> . ID PARIZQ PARM PARDER
 
     LLVEDER         reduce using rule 75 (empty -> .)
     RETURN          reduce using rule 75 (empty -> .)
     ID              shift and go to state 66
     IF              shift and go to state 67
-    FOR             shift and go to state 68
+    WHILE           shift and go to state 68
     PRINT           shift and go to state 69
 
     ESTATUTO                       shift and go to state 59
@@ -803,7 +819,7 @@ state 59
     empty                          shift and go to state 60
     ASIGNACION                     shift and go to state 61
     CONDICION                      shift and go to state 62
-    LOOP_FOR                       shift and go to state 63
+    LOOP_WHILE                     shift and go to state 63
     ESCRITURA                      shift and go to state 64
     FUNC_CALL                      shift and go to state 65
 
@@ -821,7 +837,7 @@ state 61
 
     ID              reduce using rule 24 (ESTATUTO -> ASIGNACION .)
     IF              reduce using rule 24 (ESTATUTO -> ASIGNACION .)
-    FOR             reduce using rule 24 (ESTATUTO -> ASIGNACION .)
+    WHILE           reduce using rule 24 (ESTATUTO -> ASIGNACION .)
     PRINT           reduce using rule 24 (ESTATUTO -> ASIGNACION .)
     LLVEDER         reduce using rule 24 (ESTATUTO -> ASIGNACION .)
     RETURN          reduce using rule 24 (ESTATUTO -> ASIGNACION .)
@@ -833,7 +849,7 @@ state 62
 
     ID              reduce using rule 25 (ESTATUTO -> CONDICION .)
     IF              reduce using rule 25 (ESTATUTO -> CONDICION .)
-    FOR             reduce using rule 25 (ESTATUTO -> CONDICION .)
+    WHILE           reduce using rule 25 (ESTATUTO -> CONDICION .)
     PRINT           reduce using rule 25 (ESTATUTO -> CONDICION .)
     LLVEDER         reduce using rule 25 (ESTATUTO -> CONDICION .)
     RETURN          reduce using rule 25 (ESTATUTO -> CONDICION .)
@@ -841,14 +857,14 @@ state 62
 
 state 63
 
-    (26) ESTATUTO -> LOOP_FOR .
+    (26) ESTATUTO -> LOOP_WHILE .
 
-    ID              reduce using rule 26 (ESTATUTO -> LOOP_FOR .)
-    IF              reduce using rule 26 (ESTATUTO -> LOOP_FOR .)
-    FOR             reduce using rule 26 (ESTATUTO -> LOOP_FOR .)
-    PRINT           reduce using rule 26 (ESTATUTO -> LOOP_FOR .)
-    LLVEDER         reduce using rule 26 (ESTATUTO -> LOOP_FOR .)
-    RETURN          reduce using rule 26 (ESTATUTO -> LOOP_FOR .)
+    ID              reduce using rule 26 (ESTATUTO -> LOOP_WHILE .)
+    IF              reduce using rule 26 (ESTATUTO -> LOOP_WHILE .)
+    WHILE           reduce using rule 26 (ESTATUTO -> LOOP_WHILE .)
+    PRINT           reduce using rule 26 (ESTATUTO -> LOOP_WHILE .)
+    LLVEDER         reduce using rule 26 (ESTATUTO -> LOOP_WHILE .)
+    RETURN          reduce using rule 26 (ESTATUTO -> LOOP_WHILE .)
 
 
 state 64
@@ -857,7 +873,7 @@ state 64
 
     ID              reduce using rule 27 (ESTATUTO -> ESCRITURA .)
     IF              reduce using rule 27 (ESTATUTO -> ESCRITURA .)
-    FOR             reduce using rule 27 (ESTATUTO -> ESCRITURA .)
+    WHILE           reduce using rule 27 (ESTATUTO -> ESCRITURA .)
     PRINT           reduce using rule 27 (ESTATUTO -> ESCRITURA .)
     LLVEDER         reduce using rule 27 (ESTATUTO -> ESCRITURA .)
     RETURN          reduce using rule 27 (ESTATUTO -> ESCRITURA .)
@@ -869,7 +885,7 @@ state 65
 
     ID              reduce using rule 28 (ESTATUTO -> FUNC_CALL .)
     IF              reduce using rule 28 (ESTATUTO -> FUNC_CALL .)
-    FOR             reduce using rule 28 (ESTATUTO -> FUNC_CALL .)
+    WHILE           reduce using rule 28 (ESTATUTO -> FUNC_CALL .)
     PRINT           reduce using rule 28 (ESTATUTO -> FUNC_CALL .)
     LLVEDER         reduce using rule 28 (ESTATUTO -> FUNC_CALL .)
     RETURN          reduce using rule 28 (ESTATUTO -> FUNC_CALL .)
@@ -888,21 +904,23 @@ state 66
 
 state 67
 
-    (32) CONDICION -> IF . PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    (32) CONDICION -> IF . PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
 
     PARIZQ          shift and go to state 79
 
 
 state 68
 
-    (35) LOOP_FOR -> FOR . PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
+    (35) LOOP_WHILE -> WHILE . add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
+    (97) add_jump -> .
 
-    PARIZQ          shift and go to state 80
+    PARIZQ          reduce using rule 97 (add_jump -> .)
 
+    add_jump                       shift and go to state 80
 
 state 69
 
-    (36) ESCRITURA -> PRINT . PARIZQ PRINTABLE PRINTABLE_P PARDER
+    (36) ESCRITURA -> PRINT . PARIZQ PRINTABLE PARDER
 
     PARIZQ          shift and go to state 81
 
@@ -991,7 +1009,7 @@ state 78
 
 state 79
 
-    (32) CONDICION -> IF PARIZQ . EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    (32) CONDICION -> IF PARIZQ . EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
     (49) EXPRESION -> . EXPRE cuad_or OR pila_operadores_add EXPRESION
     (50) EXPRESION -> . EXPRE cuad_or
     (51) EXPRE -> . EXPR cuad_and AND pila_operadores_add EXPRE
@@ -1022,16 +1040,16 @@ state 79
 
 state 80
 
-    (35) LOOP_FOR -> FOR PARIZQ . CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
+    (35) LOOP_WHILE -> WHILE add_jump . PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
 
-    CTE_INT         shift and go to state 104
+    PARIZQ          shift and go to state 104
 
 
 state 81
 
-    (36) ESCRITURA -> PRINT PARIZQ . PRINTABLE PRINTABLE_P PARDER
-    (37) PRINTABLE -> . EXPRESION
-    (38) PRINTABLE -> . CTE_STR
+    (36) ESCRITURA -> PRINT PARIZQ . PRINTABLE PARDER
+    (37) PRINTABLE -> . EXPRESION cuad_print PRINTABLE_P
+    (38) PRINTABLE -> . CTE_STR cuad_print_str PRINTABLE_P
     (49) EXPRESION -> . EXPRE cuad_or OR pila_operadores_add EXPRESION
     (50) EXPRESION -> . EXPRE cuad_or
     (51) EXPRE -> . EXPR cuad_and AND pila_operadores_add EXPRE
@@ -1069,20 +1087,20 @@ state 82
     (30) ESTATUTO_P -> . empty
     (24) ESTATUTO -> . ASIGNACION
     (25) ESTATUTO -> . CONDICION
-    (26) ESTATUTO -> . LOOP_FOR
+    (26) ESTATUTO -> . LOOP_WHILE
     (27) ESTATUTO -> . ESCRITURA
     (28) ESTATUTO -> . FUNC_CALL
     (75) empty -> .
     (31) ASIGNACION -> . ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
-    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
-    (35) LOOP_FOR -> . FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
-    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER
+    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    (35) LOOP_WHILE -> . WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
+    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PARDER
     (41) FUNC_CALL -> . ID PARIZQ PARM PARDER
 
     RETURN          reduce using rule 75 (empty -> .)
     ID              shift and go to state 66
     IF              shift and go to state 67
-    FOR             shift and go to state 68
+    WHILE           shift and go to state 68
     PRINT           shift and go to state 69
 
     ESTATUTO_P                     shift and go to state 108
@@ -1090,7 +1108,7 @@ state 82
     empty                          shift and go to state 60
     ASIGNACION                     shift and go to state 61
     CONDICION                      shift and go to state 62
-    LOOP_FOR                       shift and go to state 63
+    LOOP_WHILE                     shift and go to state 63
     ESCRITURA                      shift and go to state 64
     FUNC_CALL                      shift and go to state 65
 
@@ -1202,7 +1220,7 @@ state 92
 
 state 93
 
-    (32) CONDICION -> IF PARIZQ EXPRESION . PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    (32) CONDICION -> IF PARIZQ EXPRESION . PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
 
     PARDER          shift and go to state 120
 
@@ -1412,39 +1430,61 @@ state 103
 
 state 104
 
-    (35) LOOP_FOR -> FOR PARIZQ CTE_INT . COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
+    (35) LOOP_WHILE -> WHILE add_jump PARIZQ . EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
+    (49) EXPRESION -> . EXPRE cuad_or OR pila_operadores_add EXPRESION
+    (50) EXPRESION -> . EXPRE cuad_or
+    (51) EXPRE -> . EXPR cuad_and AND pila_operadores_add EXPRE
+    (52) EXPRE -> . EXPR cuad_and
+    (53) EXPR -> . EXP cuad_comp EXPR_P
+    (61) EXP -> . TERM cuad_sumres EXP_P
+    (65) TERM -> . FACTOR cuad_muldiv TERM_P
+    (69) FACTOR -> . PARIZQ fondo_falso_add EXPRESION PARDER fondo_falso_pop
+    (70) FACTOR -> . VAR_CTE
+    (71) VAR_CTE -> . ID pila_operando_id
+    (72) VAR_CTE -> . CTE_INT pila_operando_int
+    (73) VAR_CTE -> . CTE_FLT pila_operando_float
+    (74) VAR_CTE -> . CTE_CHAR pila_operando_char
 
-    COMMA           shift and go to state 130
+    PARIZQ          shift and go to state 92
+    ID              shift and go to state 100
+    CTE_INT         shift and go to state 101
+    CTE_FLT         shift and go to state 102
+    CTE_CHAR        shift and go to state 103
 
+    EXPRESION                      shift and go to state 130
+    EXPRE                          shift and go to state 94
+    EXPR                           shift and go to state 95
+    EXP                            shift and go to state 96
+    TERM                           shift and go to state 97
+    FACTOR                         shift and go to state 98
+    VAR_CTE                        shift and go to state 99
 
 state 105
 
-    (36) ESCRITURA -> PRINT PARIZQ PRINTABLE . PRINTABLE_P PARDER
-    (39) PRINTABLE_P -> . COMMA PRINTABLE PRINTABLE_P
-    (40) PRINTABLE_P -> . empty
-    (75) empty -> .
+    (36) ESCRITURA -> PRINT PARIZQ PRINTABLE . PARDER
 
-    COMMA           shift and go to state 132
-    PARDER          reduce using rule 75 (empty -> .)
+    PARDER          shift and go to state 131
 
-    PRINTABLE_P                    shift and go to state 131
-    empty                          shift and go to state 133
 
 state 106
 
-    (37) PRINTABLE -> EXPRESION .
+    (37) PRINTABLE -> EXPRESION . cuad_print PRINTABLE_P
+    (100) cuad_print -> .
 
-    COMMA           reduce using rule 37 (PRINTABLE -> EXPRESION .)
-    PARDER          reduce using rule 37 (PRINTABLE -> EXPRESION .)
+    COMMA           reduce using rule 100 (cuad_print -> .)
+    PARDER          reduce using rule 100 (cuad_print -> .)
 
+    cuad_print                     shift and go to state 132
 
 state 107
 
-    (38) PRINTABLE -> CTE_STR .
+    (38) PRINTABLE -> CTE_STR . cuad_print_str PRINTABLE_P
+    (101) cuad_print_str -> .
 
-    COMMA           reduce using rule 38 (PRINTABLE -> CTE_STR .)
-    PARDER          reduce using rule 38 (PRINTABLE -> CTE_STR .)
+    COMMA           reduce using rule 101 (cuad_print_str -> .)
+    PARDER          reduce using rule 101 (cuad_print_str -> .)
 
+    cuad_print_str                 shift and go to state 133
 
 state 108
 
@@ -1546,7 +1586,7 @@ state 116
 
     ID              reduce using rule 41 (FUNC_CALL -> ID PARIZQ PARM PARDER .)
     IF              reduce using rule 41 (FUNC_CALL -> ID PARIZQ PARM PARDER .)
-    FOR             reduce using rule 41 (FUNC_CALL -> ID PARIZQ PARM PARDER .)
+    WHILE           reduce using rule 41 (FUNC_CALL -> ID PARIZQ PARM PARDER .)
     PRINT           reduce using rule 41 (FUNC_CALL -> ID PARIZQ PARM PARDER .)
     LLVEDER         reduce using rule 41 (FUNC_CALL -> ID PARIZQ PARM PARDER .)
     RETURN          reduce using rule 41 (FUNC_CALL -> ID PARIZQ PARM PARDER .)
@@ -1599,10 +1639,12 @@ state 119
 
 state 120
 
-    (32) CONDICION -> IF PARIZQ EXPRESION PARDER . LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    (32) CONDICION -> IF PARIZQ EXPRESION PARDER . ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    (94) ver_if -> .
 
-    LLVEIZQ         shift and go to state 139
+    LLVEIZQ         reduce using rule 94 (ver_if -> .)
 
+    ver_if                         shift and go to state 139
 
 state 121
 
@@ -1792,59 +1834,48 @@ state 129
 
 state 130
 
-    (35) LOOP_FOR -> FOR PARIZQ CTE_INT COMMA . CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
+    (35) LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION . PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
 
-    CTE_INT         shift and go to state 158
+    PARDER          shift and go to state 158
 
 
 state 131
 
-    (36) ESCRITURA -> PRINT PARIZQ PRINTABLE PRINTABLE_P . PARDER
+    (36) ESCRITURA -> PRINT PARIZQ PRINTABLE PARDER .
 
-    PARDER          shift and go to state 159
+    ID              reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PARDER .)
+    IF              reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PARDER .)
+    WHILE           reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PARDER .)
+    PRINT           reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PARDER .)
+    LLVEDER         reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PARDER .)
+    RETURN          reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PARDER .)
 
 
 state 132
 
-    (39) PRINTABLE_P -> COMMA . PRINTABLE PRINTABLE_P
-    (37) PRINTABLE -> . EXPRESION
-    (38) PRINTABLE -> . CTE_STR
-    (49) EXPRESION -> . EXPRE cuad_or OR pila_operadores_add EXPRESION
-    (50) EXPRESION -> . EXPRE cuad_or
-    (51) EXPRE -> . EXPR cuad_and AND pila_operadores_add EXPRE
-    (52) EXPRE -> . EXPR cuad_and
-    (53) EXPR -> . EXP cuad_comp EXPR_P
-    (61) EXP -> . TERM cuad_sumres EXP_P
-    (65) TERM -> . FACTOR cuad_muldiv TERM_P
-    (69) FACTOR -> . PARIZQ fondo_falso_add EXPRESION PARDER fondo_falso_pop
-    (70) FACTOR -> . VAR_CTE
-    (71) VAR_CTE -> . ID pila_operando_id
-    (72) VAR_CTE -> . CTE_INT pila_operando_int
-    (73) VAR_CTE -> . CTE_FLT pila_operando_float
-    (74) VAR_CTE -> . CTE_CHAR pila_operando_char
+    (37) PRINTABLE -> EXPRESION cuad_print . PRINTABLE_P
+    (39) PRINTABLE_P -> . COMMA PRINTABLE
+    (40) PRINTABLE_P -> . empty
+    (75) empty -> .
 
-    CTE_STR         shift and go to state 107
-    PARIZQ          shift and go to state 92
-    ID              shift and go to state 100
-    CTE_INT         shift and go to state 101
-    CTE_FLT         shift and go to state 102
-    CTE_CHAR        shift and go to state 103
+    COMMA           shift and go to state 160
+    PARDER          reduce using rule 75 (empty -> .)
 
-    PRINTABLE                      shift and go to state 160
-    EXPRESION                      shift and go to state 106
-    EXPRE                          shift and go to state 94
-    EXPR                           shift and go to state 95
-    EXP                            shift and go to state 96
-    TERM                           shift and go to state 97
-    FACTOR                         shift and go to state 98
-    VAR_CTE                        shift and go to state 99
+    PRINTABLE_P                    shift and go to state 159
+    empty                          shift and go to state 161
 
 state 133
 
-    (40) PRINTABLE_P -> empty .
+    (38) PRINTABLE -> CTE_STR cuad_print_str . PRINTABLE_P
+    (39) PRINTABLE_P -> . COMMA PRINTABLE
+    (40) PRINTABLE_P -> . empty
+    (75) empty -> .
 
-    PARDER          reduce using rule 40 (PRINTABLE_P -> empty .)
+    COMMA           shift and go to state 160
+    PARDER          reduce using rule 75 (empty -> .)
 
+    PRINTABLE_P                    shift and go to state 162
+    empty                          shift and go to state 161
 
 state 134
 
@@ -1869,7 +1900,7 @@ state 134
     CTE_FLT         shift and go to state 102
     CTE_CHAR        shift and go to state 103
 
-    EXPRESION                      shift and go to state 161
+    EXPRESION                      shift and go to state 163
     EXPRE                          shift and go to state 94
     EXPR                           shift and go to state 95
     EXP                            shift and go to state 96
@@ -1881,7 +1912,7 @@ state 135
 
     (21) PARAMS_P -> COMMA TYPE . ID ADD_VAR PARAMS_P
 
-    ID              shift and go to state 162
+    ID              shift and go to state 164
 
 
 state 136
@@ -1891,7 +1922,7 @@ state 136
 
     PTOCOMA         reduce using rule 92 (cuad_asign -> .)
 
-    cuad_asign                     shift and go to state 163
+    cuad_asign                     shift and go to state 165
 
 state 137
 
@@ -1904,40 +1935,15 @@ state 138
 
     (69) FACTOR -> PARIZQ fondo_falso_add EXPRESION . PARDER fondo_falso_pop
 
-    PARDER          shift and go to state 164
+    PARDER          shift and go to state 166
 
 
 state 139
 
-    (32) CONDICION -> IF PARIZQ EXPRESION PARDER LLVEIZQ . ESTATUTO_P LLVEDER CONDICION_P
-    (29) ESTATUTO_P -> . ESTATUTO ESTATUTO_P
-    (30) ESTATUTO_P -> . empty
-    (24) ESTATUTO -> . ASIGNACION
-    (25) ESTATUTO -> . CONDICION
-    (26) ESTATUTO -> . LOOP_FOR
-    (27) ESTATUTO -> . ESCRITURA
-    (28) ESTATUTO -> . FUNC_CALL
-    (75) empty -> .
-    (31) ASIGNACION -> . ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
-    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
-    (35) LOOP_FOR -> . FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
-    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER
-    (41) FUNC_CALL -> . ID PARIZQ PARM PARDER
+    (32) CONDICION -> IF PARIZQ EXPRESION PARDER ver_if . LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
 
-    LLVEDER         reduce using rule 75 (empty -> .)
-    ID              shift and go to state 66
-    IF              shift and go to state 67
-    FOR             shift and go to state 68
-    PRINT           shift and go to state 69
+    LLVEIZQ         shift and go to state 167
 
-    ESTATUTO_P                     shift and go to state 165
-    ESTATUTO                       shift and go to state 59
-    empty                          shift and go to state 60
-    ASIGNACION                     shift and go to state 61
-    CONDICION                      shift and go to state 62
-    LOOP_FOR                       shift and go to state 63
-    ESCRITURA                      shift and go to state 64
-    FUNC_CALL                      shift and go to state 65
 
 state 140
 
@@ -1950,7 +1956,7 @@ state 140
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 166
+    pila_operadores_add            shift and go to state 168
 
 state 141
 
@@ -1963,7 +1969,7 @@ state 141
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 167
+    pila_operadores_add            shift and go to state 169
 
 state 142
 
@@ -1987,7 +1993,7 @@ state 143
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 168
+    pila_operadores_add            shift and go to state 170
 
 state 144
 
@@ -2000,7 +2006,7 @@ state 144
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 169
+    pila_operadores_add            shift and go to state 171
 
 state 145
 
@@ -2013,7 +2019,7 @@ state 145
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 170
+    pila_operadores_add            shift and go to state 172
 
 state 146
 
@@ -2026,7 +2032,7 @@ state 146
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 171
+    pila_operadores_add            shift and go to state 173
 
 state 147
 
@@ -2039,7 +2045,7 @@ state 147
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 172
+    pila_operadores_add            shift and go to state 174
 
 state 148
 
@@ -2052,7 +2058,7 @@ state 148
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 173
+    pila_operadores_add            shift and go to state 175
 
 state 149
 
@@ -2093,7 +2099,7 @@ state 151
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 174
+    pila_operadores_add            shift and go to state 176
 
 state 152
 
@@ -2106,7 +2112,7 @@ state 152
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 175
+    pila_operadores_add            shift and go to state 177
 
 state 153
 
@@ -2155,7 +2161,7 @@ state 155
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 176
+    pila_operadores_add            shift and go to state 178
 
 state 156
 
@@ -2168,7 +2174,7 @@ state 156
     CTE_FLT         reduce using rule 84 (pila_operadores_add -> .)
     CTE_CHAR        reduce using rule 84 (pila_operadores_add -> .)
 
-    pila_operadores_add            shift and go to state 177
+    pila_operadores_add            shift and go to state 179
 
 state 157
 
@@ -2191,46 +2197,79 @@ state 157
 
 state 158
 
-    (35) LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT . COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
+    (35) LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER . ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
+    (98) ver_while -> .
 
-    COMMA           shift and go to state 178
+    LLVEIZQ         reduce using rule 98 (ver_while -> .)
 
+    ver_while                      shift and go to state 180
 
 state 159
 
-    (36) ESCRITURA -> PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER .
+    (37) PRINTABLE -> EXPRESION cuad_print PRINTABLE_P .
 
-    ID              reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER .)
-    IF              reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER .)
-    FOR             reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER .)
-    PRINT           reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER .)
-    LLVEDER         reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER .)
-    RETURN          reduce using rule 36 (ESCRITURA -> PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER .)
+    PARDER          reduce using rule 37 (PRINTABLE -> EXPRESION cuad_print PRINTABLE_P .)
 
 
 state 160
 
-    (39) PRINTABLE_P -> COMMA PRINTABLE . PRINTABLE_P
-    (39) PRINTABLE_P -> . COMMA PRINTABLE PRINTABLE_P
-    (40) PRINTABLE_P -> . empty
-    (75) empty -> .
+    (39) PRINTABLE_P -> COMMA . PRINTABLE
+    (37) PRINTABLE -> . EXPRESION cuad_print PRINTABLE_P
+    (38) PRINTABLE -> . CTE_STR cuad_print_str PRINTABLE_P
+    (49) EXPRESION -> . EXPRE cuad_or OR pila_operadores_add EXPRESION
+    (50) EXPRESION -> . EXPRE cuad_or
+    (51) EXPRE -> . EXPR cuad_and AND pila_operadores_add EXPRE
+    (52) EXPRE -> . EXPR cuad_and
+    (53) EXPR -> . EXP cuad_comp EXPR_P
+    (61) EXP -> . TERM cuad_sumres EXP_P
+    (65) TERM -> . FACTOR cuad_muldiv TERM_P
+    (69) FACTOR -> . PARIZQ fondo_falso_add EXPRESION PARDER fondo_falso_pop
+    (70) FACTOR -> . VAR_CTE
+    (71) VAR_CTE -> . ID pila_operando_id
+    (72) VAR_CTE -> . CTE_INT pila_operando_int
+    (73) VAR_CTE -> . CTE_FLT pila_operando_float
+    (74) VAR_CTE -> . CTE_CHAR pila_operando_char
 
-    COMMA           shift and go to state 132
-    PARDER          reduce using rule 75 (empty -> .)
+    CTE_STR         shift and go to state 107
+    PARIZQ          shift and go to state 92
+    ID              shift and go to state 100
+    CTE_INT         shift and go to state 101
+    CTE_FLT         shift and go to state 102
+    CTE_CHAR        shift and go to state 103
 
-    PRINTABLE_P                    shift and go to state 179
-    empty                          shift and go to state 133
+    PRINTABLE                      shift and go to state 181
+    EXPRESION                      shift and go to state 106
+    EXPRE                          shift and go to state 94
+    EXPR                           shift and go to state 95
+    EXP                            shift and go to state 96
+    TERM                           shift and go to state 97
+    FACTOR                         shift and go to state 98
+    VAR_CTE                        shift and go to state 99
 
 state 161
+
+    (40) PRINTABLE_P -> empty .
+
+    PARDER          reduce using rule 40 (PRINTABLE_P -> empty .)
+
+
+state 162
+
+    (38) PRINTABLE -> CTE_STR cuad_print_str PRINTABLE_P .
+
+    PARDER          reduce using rule 38 (PRINTABLE -> CTE_STR cuad_print_str PRINTABLE_P .)
+
+
+state 163
 
     (10) FUNCS -> FUNC TYPE_P ID ADD_FUNC PARIZQ PARAMS PARDER LLVEIZQ ESTATUTO_P RETURN EXPRESION . cuad_return PTOCOMA LLVEDER
     (93) cuad_return -> .
 
     PTOCOMA         reduce using rule 93 (cuad_return -> .)
 
-    cuad_return                    shift and go to state 180
+    cuad_return                    shift and go to state 182
 
-state 162
+state 164
 
     (21) PARAMS_P -> COMMA TYPE ID . ADD_VAR PARAMS_P
     (78) ADD_VAR -> .
@@ -2238,16 +2277,16 @@ state 162
     COMMA           reduce using rule 78 (ADD_VAR -> .)
     PARDER          reduce using rule 78 (ADD_VAR -> .)
 
-    ADD_VAR                        shift and go to state 181
+    ADD_VAR                        shift and go to state 183
 
-state 163
+state 165
 
     (31) ASIGNACION -> ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign . PTOCOMA
 
-    PTOCOMA         shift and go to state 182
+    PTOCOMA         shift and go to state 184
 
 
-state 164
+state 166
 
     (69) FACTOR -> PARIZQ fondo_falso_add EXPRESION PARDER . fondo_falso_pop
     (86) fondo_falso_pop -> .
@@ -2268,16 +2307,41 @@ state 164
     COMMA           reduce using rule 86 (fondo_falso_pop -> .)
     PTOCOMA         reduce using rule 86 (fondo_falso_pop -> .)
 
-    fondo_falso_pop                shift and go to state 183
+    fondo_falso_pop                shift and go to state 185
 
-state 165
+state 167
 
-    (32) CONDICION -> IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P . LLVEDER CONDICION_P
+    (32) CONDICION -> IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ . ESTATUTO_P LLVEDER CONDICION_P
+    (29) ESTATUTO_P -> . ESTATUTO ESTATUTO_P
+    (30) ESTATUTO_P -> . empty
+    (24) ESTATUTO -> . ASIGNACION
+    (25) ESTATUTO -> . CONDICION
+    (26) ESTATUTO -> . LOOP_WHILE
+    (27) ESTATUTO -> . ESCRITURA
+    (28) ESTATUTO -> . FUNC_CALL
+    (75) empty -> .
+    (31) ASIGNACION -> . ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
+    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    (35) LOOP_WHILE -> . WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
+    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PARDER
+    (41) FUNC_CALL -> . ID PARIZQ PARM PARDER
 
-    LLVEDER         shift and go to state 184
+    LLVEDER         reduce using rule 75 (empty -> .)
+    ID              shift and go to state 66
+    IF              shift and go to state 67
+    WHILE           shift and go to state 68
+    PRINT           shift and go to state 69
 
+    ESTATUTO_P                     shift and go to state 186
+    ESTATUTO                       shift and go to state 59
+    empty                          shift and go to state 60
+    ASIGNACION                     shift and go to state 61
+    CONDICION                      shift and go to state 62
+    LOOP_WHILE                     shift and go to state 63
+    ESCRITURA                      shift and go to state 64
+    FUNC_CALL                      shift and go to state 65
 
-state 166
+state 168
 
     (49) EXPRESION -> EXPRE cuad_or OR pila_operadores_add . EXPRESION
     (49) EXPRESION -> . EXPRE cuad_or OR pila_operadores_add EXPRESION
@@ -2301,14 +2365,14 @@ state 166
     CTE_CHAR        shift and go to state 103
 
     EXPRE                          shift and go to state 94
-    EXPRESION                      shift and go to state 185
+    EXPRESION                      shift and go to state 187
     EXPR                           shift and go to state 95
     EXP                            shift and go to state 96
     TERM                           shift and go to state 97
     FACTOR                         shift and go to state 98
     VAR_CTE                        shift and go to state 99
 
-state 167
+state 169
 
     (51) EXPRE -> EXPR cuad_and AND pila_operadores_add . EXPRE
     (51) EXPRE -> . EXPR cuad_and AND pila_operadores_add EXPRE
@@ -2330,57 +2394,7 @@ state 167
     CTE_CHAR        shift and go to state 103
 
     EXPR                           shift and go to state 95
-    EXPRE                          shift and go to state 186
-    EXP                            shift and go to state 96
-    TERM                           shift and go to state 97
-    FACTOR                         shift and go to state 98
-    VAR_CTE                        shift and go to state 99
-
-state 168
-
-    (54) EXPR_P -> LT pila_operadores_add . EXPR
-    (53) EXPR -> . EXP cuad_comp EXPR_P
-    (61) EXP -> . TERM cuad_sumres EXP_P
-    (65) TERM -> . FACTOR cuad_muldiv TERM_P
-    (69) FACTOR -> . PARIZQ fondo_falso_add EXPRESION PARDER fondo_falso_pop
-    (70) FACTOR -> . VAR_CTE
-    (71) VAR_CTE -> . ID pila_operando_id
-    (72) VAR_CTE -> . CTE_INT pila_operando_int
-    (73) VAR_CTE -> . CTE_FLT pila_operando_float
-    (74) VAR_CTE -> . CTE_CHAR pila_operando_char
-
-    PARIZQ          shift and go to state 92
-    ID              shift and go to state 100
-    CTE_INT         shift and go to state 101
-    CTE_FLT         shift and go to state 102
-    CTE_CHAR        shift and go to state 103
-
-    EXPR                           shift and go to state 187
-    EXP                            shift and go to state 96
-    TERM                           shift and go to state 97
-    FACTOR                         shift and go to state 98
-    VAR_CTE                        shift and go to state 99
-
-state 169
-
-    (55) EXPR_P -> GT pila_operadores_add . EXPR
-    (53) EXPR -> . EXP cuad_comp EXPR_P
-    (61) EXP -> . TERM cuad_sumres EXP_P
-    (65) TERM -> . FACTOR cuad_muldiv TERM_P
-    (69) FACTOR -> . PARIZQ fondo_falso_add EXPRESION PARDER fondo_falso_pop
-    (70) FACTOR -> . VAR_CTE
-    (71) VAR_CTE -> . ID pila_operando_id
-    (72) VAR_CTE -> . CTE_INT pila_operando_int
-    (73) VAR_CTE -> . CTE_FLT pila_operando_float
-    (74) VAR_CTE -> . CTE_CHAR pila_operando_char
-
-    PARIZQ          shift and go to state 92
-    ID              shift and go to state 100
-    CTE_INT         shift and go to state 101
-    CTE_FLT         shift and go to state 102
-    CTE_CHAR        shift and go to state 103
-
-    EXPR                           shift and go to state 188
+    EXPRE                          shift and go to state 188
     EXP                            shift and go to state 96
     TERM                           shift and go to state 97
     FACTOR                         shift and go to state 98
@@ -2388,7 +2402,7 @@ state 169
 
 state 170
 
-    (56) EXPR_P -> DIFF pila_operadores_add . EXPR
+    (54) EXPR_P -> LT pila_operadores_add . EXPR
     (53) EXPR -> . EXP cuad_comp EXPR_P
     (61) EXP -> . TERM cuad_sumres EXP_P
     (65) TERM -> . FACTOR cuad_muldiv TERM_P
@@ -2413,7 +2427,7 @@ state 170
 
 state 171
 
-    (57) EXPR_P -> LTE pila_operadores_add . EXPR
+    (55) EXPR_P -> GT pila_operadores_add . EXPR
     (53) EXPR -> . EXP cuad_comp EXPR_P
     (61) EXP -> . TERM cuad_sumres EXP_P
     (65) TERM -> . FACTOR cuad_muldiv TERM_P
@@ -2438,7 +2452,7 @@ state 171
 
 state 172
 
-    (58) EXPR_P -> GTE pila_operadores_add . EXPR
+    (56) EXPR_P -> DIFF pila_operadores_add . EXPR
     (53) EXPR -> . EXP cuad_comp EXPR_P
     (61) EXP -> . TERM cuad_sumres EXP_P
     (65) TERM -> . FACTOR cuad_muldiv TERM_P
@@ -2463,7 +2477,7 @@ state 172
 
 state 173
 
-    (59) EXPR_P -> EQUAL pila_operadores_add . EXPR
+    (57) EXPR_P -> LTE pila_operadores_add . EXPR
     (53) EXPR -> . EXP cuad_comp EXPR_P
     (61) EXP -> . TERM cuad_sumres EXP_P
     (65) TERM -> . FACTOR cuad_muldiv TERM_P
@@ -2488,6 +2502,56 @@ state 173
 
 state 174
 
+    (58) EXPR_P -> GTE pila_operadores_add . EXPR
+    (53) EXPR -> . EXP cuad_comp EXPR_P
+    (61) EXP -> . TERM cuad_sumres EXP_P
+    (65) TERM -> . FACTOR cuad_muldiv TERM_P
+    (69) FACTOR -> . PARIZQ fondo_falso_add EXPRESION PARDER fondo_falso_pop
+    (70) FACTOR -> . VAR_CTE
+    (71) VAR_CTE -> . ID pila_operando_id
+    (72) VAR_CTE -> . CTE_INT pila_operando_int
+    (73) VAR_CTE -> . CTE_FLT pila_operando_float
+    (74) VAR_CTE -> . CTE_CHAR pila_operando_char
+
+    PARIZQ          shift and go to state 92
+    ID              shift and go to state 100
+    CTE_INT         shift and go to state 101
+    CTE_FLT         shift and go to state 102
+    CTE_CHAR        shift and go to state 103
+
+    EXPR                           shift and go to state 193
+    EXP                            shift and go to state 96
+    TERM                           shift and go to state 97
+    FACTOR                         shift and go to state 98
+    VAR_CTE                        shift and go to state 99
+
+state 175
+
+    (59) EXPR_P -> EQUAL pila_operadores_add . EXPR
+    (53) EXPR -> . EXP cuad_comp EXPR_P
+    (61) EXP -> . TERM cuad_sumres EXP_P
+    (65) TERM -> . FACTOR cuad_muldiv TERM_P
+    (69) FACTOR -> . PARIZQ fondo_falso_add EXPRESION PARDER fondo_falso_pop
+    (70) FACTOR -> . VAR_CTE
+    (71) VAR_CTE -> . ID pila_operando_id
+    (72) VAR_CTE -> . CTE_INT pila_operando_int
+    (73) VAR_CTE -> . CTE_FLT pila_operando_float
+    (74) VAR_CTE -> . CTE_CHAR pila_operando_char
+
+    PARIZQ          shift and go to state 92
+    ID              shift and go to state 100
+    CTE_INT         shift and go to state 101
+    CTE_FLT         shift and go to state 102
+    CTE_CHAR        shift and go to state 103
+
+    EXPR                           shift and go to state 194
+    EXP                            shift and go to state 96
+    TERM                           shift and go to state 97
+    FACTOR                         shift and go to state 98
+    VAR_CTE                        shift and go to state 99
+
+state 176
+
     (62) EXP_P -> MAS pila_operadores_add . EXP
     (61) EXP -> . TERM cuad_sumres EXP_P
     (65) TERM -> . FACTOR cuad_muldiv TERM_P
@@ -2504,12 +2568,12 @@ state 174
     CTE_FLT         shift and go to state 102
     CTE_CHAR        shift and go to state 103
 
-    EXP                            shift and go to state 193
+    EXP                            shift and go to state 195
     TERM                           shift and go to state 97
     FACTOR                         shift and go to state 98
     VAR_CTE                        shift and go to state 99
 
-state 175
+state 177
 
     (63) EXP_P -> MENOS pila_operadores_add . EXP
     (61) EXP -> . TERM cuad_sumres EXP_P
@@ -2527,12 +2591,12 @@ state 175
     CTE_FLT         shift and go to state 102
     CTE_CHAR        shift and go to state 103
 
-    EXP                            shift and go to state 194
+    EXP                            shift and go to state 196
     TERM                           shift and go to state 97
     FACTOR                         shift and go to state 98
     VAR_CTE                        shift and go to state 99
 
-state 176
+state 178
 
     (66) TERM_P -> MULT pila_operadores_add . TERM
     (65) TERM -> . FACTOR cuad_muldiv TERM_P
@@ -2549,11 +2613,11 @@ state 176
     CTE_FLT         shift and go to state 102
     CTE_CHAR        shift and go to state 103
 
-    TERM                           shift and go to state 195
+    TERM                           shift and go to state 197
     FACTOR                         shift and go to state 98
     VAR_CTE                        shift and go to state 99
 
-state 177
+state 179
 
     (67) TERM_P -> DIV pila_operadores_add . TERM
     (65) TERM -> . FACTOR cuad_muldiv TERM_P
@@ -2570,32 +2634,32 @@ state 177
     CTE_FLT         shift and go to state 102
     CTE_CHAR        shift and go to state 103
 
-    TERM                           shift and go to state 196
+    TERM                           shift and go to state 198
     FACTOR                         shift and go to state 98
     VAR_CTE                        shift and go to state 99
 
-state 178
-
-    (35) LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA . CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
-
-    CTE_INT         shift and go to state 197
-
-
-state 179
-
-    (39) PRINTABLE_P -> COMMA PRINTABLE PRINTABLE_P .
-
-    PARDER          reduce using rule 39 (PRINTABLE_P -> COMMA PRINTABLE PRINTABLE_P .)
-
-
 state 180
 
-    (10) FUNCS -> FUNC TYPE_P ID ADD_FUNC PARIZQ PARAMS PARDER LLVEIZQ ESTATUTO_P RETURN EXPRESION cuad_return . PTOCOMA LLVEDER
+    (35) LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while . LLVEIZQ ESTATUTO_P LLVEDER while_end
 
-    PTOCOMA         shift and go to state 198
+    LLVEIZQ         shift and go to state 199
 
 
 state 181
+
+    (39) PRINTABLE_P -> COMMA PRINTABLE .
+
+    PARDER          reduce using rule 39 (PRINTABLE_P -> COMMA PRINTABLE .)
+
+
+state 182
+
+    (10) FUNCS -> FUNC TYPE_P ID ADD_FUNC PARIZQ PARAMS PARDER LLVEIZQ ESTATUTO_P RETURN EXPRESION cuad_return . PTOCOMA LLVEDER
+
+    PTOCOMA         shift and go to state 200
+
+
+state 183
 
     (21) PARAMS_P -> COMMA TYPE ID ADD_VAR . PARAMS_P
     (21) PARAMS_P -> . COMMA TYPE ID ADD_VAR PARAMS_P
@@ -2605,22 +2669,22 @@ state 181
     COMMA           shift and go to state 110
     PARDER          reduce using rule 75 (empty -> .)
 
-    PARAMS_P                       shift and go to state 199
+    PARAMS_P                       shift and go to state 201
     empty                          shift and go to state 111
 
-state 182
+state 184
 
     (31) ASIGNACION -> ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA .
 
     ID              reduce using rule 31 (ASIGNACION -> ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA .)
     IF              reduce using rule 31 (ASIGNACION -> ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA .)
-    FOR             reduce using rule 31 (ASIGNACION -> ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA .)
+    WHILE           reduce using rule 31 (ASIGNACION -> ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA .)
     PRINT           reduce using rule 31 (ASIGNACION -> ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA .)
     LLVEDER         reduce using rule 31 (ASIGNACION -> ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA .)
     RETURN          reduce using rule 31 (ASIGNACION -> ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA .)
 
 
-state 183
+state 185
 
     (69) FACTOR -> PARIZQ fondo_falso_add EXPRESION PARDER fondo_falso_pop .
 
@@ -2641,25 +2705,14 @@ state 183
     PTOCOMA         reduce using rule 69 (FACTOR -> PARIZQ fondo_falso_add EXPRESION PARDER fondo_falso_pop .)
 
 
-state 184
+state 186
 
-    (32) CONDICION -> IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER . CONDICION_P
-    (33) CONDICION_P -> . ELSE LLVEIZQ ESTATUTO_P LLVEDER
-    (34) CONDICION_P -> . empty
-    (75) empty -> .
+    (32) CONDICION -> IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P . LLVEDER CONDICION_P
 
-    ELSE            shift and go to state 201
-    ID              reduce using rule 75 (empty -> .)
-    IF              reduce using rule 75 (empty -> .)
-    FOR             reduce using rule 75 (empty -> .)
-    PRINT           reduce using rule 75 (empty -> .)
-    LLVEDER         reduce using rule 75 (empty -> .)
-    RETURN          reduce using rule 75 (empty -> .)
+    LLVEDER         shift and go to state 202
 
-    CONDICION_P                    shift and go to state 200
-    empty                          shift and go to state 202
 
-state 185
+state 187
 
     (49) EXPRESION -> EXPRE cuad_or OR pila_operadores_add EXPRESION .
 
@@ -2668,7 +2721,7 @@ state 185
     PTOCOMA         reduce using rule 49 (EXPRESION -> EXPRE cuad_or OR pila_operadores_add EXPRESION .)
 
 
-state 186
+state 188
 
     (51) EXPRE -> EXPR cuad_and AND pila_operadores_add EXPRE .
 
@@ -2678,7 +2731,7 @@ state 186
     PTOCOMA         reduce using rule 51 (EXPRE -> EXPR cuad_and AND pila_operadores_add EXPRE .)
 
 
-state 187
+state 189
 
     (54) EXPR_P -> LT pila_operadores_add EXPR .
 
@@ -2689,7 +2742,7 @@ state 187
     PTOCOMA         reduce using rule 54 (EXPR_P -> LT pila_operadores_add EXPR .)
 
 
-state 188
+state 190
 
     (55) EXPR_P -> GT pila_operadores_add EXPR .
 
@@ -2700,7 +2753,7 @@ state 188
     PTOCOMA         reduce using rule 55 (EXPR_P -> GT pila_operadores_add EXPR .)
 
 
-state 189
+state 191
 
     (56) EXPR_P -> DIFF pila_operadores_add EXPR .
 
@@ -2711,7 +2764,7 @@ state 189
     PTOCOMA         reduce using rule 56 (EXPR_P -> DIFF pila_operadores_add EXPR .)
 
 
-state 190
+state 192
 
     (57) EXPR_P -> LTE pila_operadores_add EXPR .
 
@@ -2722,7 +2775,7 @@ state 190
     PTOCOMA         reduce using rule 57 (EXPR_P -> LTE pila_operadores_add EXPR .)
 
 
-state 191
+state 193
 
     (58) EXPR_P -> GTE pila_operadores_add EXPR .
 
@@ -2733,7 +2786,7 @@ state 191
     PTOCOMA         reduce using rule 58 (EXPR_P -> GTE pila_operadores_add EXPR .)
 
 
-state 192
+state 194
 
     (59) EXPR_P -> EQUAL pila_operadores_add EXPR .
 
@@ -2744,7 +2797,7 @@ state 192
     PTOCOMA         reduce using rule 59 (EXPR_P -> EQUAL pila_operadores_add EXPR .)
 
 
-state 193
+state 195
 
     (62) EXP_P -> MAS pila_operadores_add EXP .
 
@@ -2761,7 +2814,7 @@ state 193
     PTOCOMA         reduce using rule 62 (EXP_P -> MAS pila_operadores_add EXP .)
 
 
-state 194
+state 196
 
     (63) EXP_P -> MENOS pila_operadores_add EXP .
 
@@ -2778,7 +2831,7 @@ state 194
     PTOCOMA         reduce using rule 63 (EXP_P -> MENOS pila_operadores_add EXP .)
 
 
-state 195
+state 197
 
     (66) TERM_P -> MULT pila_operadores_add TERM .
 
@@ -2797,7 +2850,7 @@ state 195
     PTOCOMA         reduce using rule 66 (TERM_P -> MULT pila_operadores_add TERM .)
 
 
-state 196
+state 198
 
     (67) TERM_P -> DIV pila_operadores_add TERM .
 
@@ -2816,63 +2869,75 @@ state 196
     PTOCOMA         reduce using rule 67 (TERM_P -> DIV pila_operadores_add TERM .)
 
 
-state 197
+state 199
 
-    (35) LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT . PARDER LLVEIZQ ESTATUTO_P LLVEDER
+    (35) LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ . ESTATUTO_P LLVEDER while_end
+    (29) ESTATUTO_P -> . ESTATUTO ESTATUTO_P
+    (30) ESTATUTO_P -> . empty
+    (24) ESTATUTO -> . ASIGNACION
+    (25) ESTATUTO -> . CONDICION
+    (26) ESTATUTO -> . LOOP_WHILE
+    (27) ESTATUTO -> . ESCRITURA
+    (28) ESTATUTO -> . FUNC_CALL
+    (75) empty -> .
+    (31) ASIGNACION -> . ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
+    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    (35) LOOP_WHILE -> . WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
+    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PARDER
+    (41) FUNC_CALL -> . ID PARIZQ PARM PARDER
 
-    PARDER          shift and go to state 203
+    LLVEDER         reduce using rule 75 (empty -> .)
+    ID              shift and go to state 66
+    IF              shift and go to state 67
+    WHILE           shift and go to state 68
+    PRINT           shift and go to state 69
 
+    ESTATUTO_P                     shift and go to state 203
+    ESTATUTO                       shift and go to state 59
+    empty                          shift and go to state 60
+    ASIGNACION                     shift and go to state 61
+    CONDICION                      shift and go to state 62
+    LOOP_WHILE                     shift and go to state 63
+    ESCRITURA                      shift and go to state 64
+    FUNC_CALL                      shift and go to state 65
 
-state 198
+state 200
 
     (10) FUNCS -> FUNC TYPE_P ID ADD_FUNC PARIZQ PARAMS PARDER LLVEIZQ ESTATUTO_P RETURN EXPRESION cuad_return PTOCOMA . LLVEDER
 
     LLVEDER         shift and go to state 204
 
 
-state 199
+state 201
 
     (21) PARAMS_P -> COMMA TYPE ID ADD_VAR PARAMS_P .
 
     PARDER          reduce using rule 21 (PARAMS_P -> COMMA TYPE ID ADD_VAR PARAMS_P .)
 
 
-state 200
-
-    (32) CONDICION -> IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .
-
-    ID              reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
-    IF              reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
-    FOR             reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
-    PRINT           reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
-    LLVEDER         reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
-    RETURN          reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
-
-
-state 201
-
-    (33) CONDICION_P -> ELSE . LLVEIZQ ESTATUTO_P LLVEDER
-
-    LLVEIZQ         shift and go to state 205
-
-
 state 202
 
-    (34) CONDICION_P -> empty .
+    (32) CONDICION -> IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER . CONDICION_P
+    (33) CONDICION_P -> . ELSE else_jump LLVEIZQ ESTATUTO_P LLVEDER if_end
+    (34) CONDICION_P -> . if_end
+    (95) if_end -> .
 
-    ID              reduce using rule 34 (CONDICION_P -> empty .)
-    IF              reduce using rule 34 (CONDICION_P -> empty .)
-    FOR             reduce using rule 34 (CONDICION_P -> empty .)
-    PRINT           reduce using rule 34 (CONDICION_P -> empty .)
-    LLVEDER         reduce using rule 34 (CONDICION_P -> empty .)
-    RETURN          reduce using rule 34 (CONDICION_P -> empty .)
+    ELSE            shift and go to state 206
+    ID              reduce using rule 95 (if_end -> .)
+    IF              reduce using rule 95 (if_end -> .)
+    WHILE           reduce using rule 95 (if_end -> .)
+    PRINT           reduce using rule 95 (if_end -> .)
+    LLVEDER         reduce using rule 95 (if_end -> .)
+    RETURN          reduce using rule 95 (if_end -> .)
 
+    CONDICION_P                    shift and go to state 205
+    if_end                         shift and go to state 207
 
 state 203
 
-    (35) LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER . LLVEIZQ ESTATUTO_P LLVEDER
+    (35) LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P . LLVEDER while_end
 
-    LLVEIZQ         shift and go to state 206
+    LLVEDER         shift and go to state 208
 
 
 state 204
@@ -2885,102 +2950,131 @@ state 204
 
 state 205
 
-    (33) CONDICION_P -> ELSE LLVEIZQ . ESTATUTO_P LLVEDER
-    (29) ESTATUTO_P -> . ESTATUTO ESTATUTO_P
-    (30) ESTATUTO_P -> . empty
-    (24) ESTATUTO -> . ASIGNACION
-    (25) ESTATUTO -> . CONDICION
-    (26) ESTATUTO -> . LOOP_FOR
-    (27) ESTATUTO -> . ESCRITURA
-    (28) ESTATUTO -> . FUNC_CALL
-    (75) empty -> .
-    (31) ASIGNACION -> . ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
-    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
-    (35) LOOP_FOR -> . FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
-    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER
-    (41) FUNC_CALL -> . ID PARIZQ PARM PARDER
+    (32) CONDICION -> IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .
 
-    LLVEDER         reduce using rule 75 (empty -> .)
-    ID              shift and go to state 66
-    IF              shift and go to state 67
-    FOR             shift and go to state 68
-    PRINT           shift and go to state 69
+    ID              reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
+    IF              reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
+    WHILE           reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
+    PRINT           reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
+    LLVEDER         reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
+    RETURN          reduce using rule 32 (CONDICION -> IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P .)
 
-    ESTATUTO_P                     shift and go to state 207
-    ESTATUTO                       shift and go to state 59
-    empty                          shift and go to state 60
-    ASIGNACION                     shift and go to state 61
-    CONDICION                      shift and go to state 62
-    LOOP_FOR                       shift and go to state 63
-    ESCRITURA                      shift and go to state 64
-    FUNC_CALL                      shift and go to state 65
 
 state 206
 
-    (35) LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ . ESTATUTO_P LLVEDER
-    (29) ESTATUTO_P -> . ESTATUTO ESTATUTO_P
-    (30) ESTATUTO_P -> . empty
-    (24) ESTATUTO -> . ASIGNACION
-    (25) ESTATUTO -> . CONDICION
-    (26) ESTATUTO -> . LOOP_FOR
-    (27) ESTATUTO -> . ESCRITURA
-    (28) ESTATUTO -> . FUNC_CALL
-    (75) empty -> .
-    (31) ASIGNACION -> . ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
-    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
-    (35) LOOP_FOR -> . FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
-    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER
-    (41) FUNC_CALL -> . ID PARIZQ PARM PARDER
+    (33) CONDICION_P -> ELSE . else_jump LLVEIZQ ESTATUTO_P LLVEDER if_end
+    (96) else_jump -> .
 
-    LLVEDER         reduce using rule 75 (empty -> .)
-    ID              shift and go to state 66
-    IF              shift and go to state 67
-    FOR             shift and go to state 68
-    PRINT           shift and go to state 69
+    LLVEIZQ         reduce using rule 96 (else_jump -> .)
 
-    ESTATUTO_P                     shift and go to state 208
-    ESTATUTO                       shift and go to state 59
-    empty                          shift and go to state 60
-    ASIGNACION                     shift and go to state 61
-    CONDICION                      shift and go to state 62
-    LOOP_FOR                       shift and go to state 63
-    ESCRITURA                      shift and go to state 64
-    FUNC_CALL                      shift and go to state 65
+    else_jump                      shift and go to state 209
 
 state 207
 
-    (33) CONDICION_P -> ELSE LLVEIZQ ESTATUTO_P . LLVEDER
+    (34) CONDICION_P -> if_end .
 
-    LLVEDER         shift and go to state 209
+    ID              reduce using rule 34 (CONDICION_P -> if_end .)
+    IF              reduce using rule 34 (CONDICION_P -> if_end .)
+    WHILE           reduce using rule 34 (CONDICION_P -> if_end .)
+    PRINT           reduce using rule 34 (CONDICION_P -> if_end .)
+    LLVEDER         reduce using rule 34 (CONDICION_P -> if_end .)
+    RETURN          reduce using rule 34 (CONDICION_P -> if_end .)
 
 
 state 208
 
-    (35) LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P . LLVEDER
+    (35) LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER . while_end
+    (99) while_end -> .
 
-    LLVEDER         shift and go to state 210
+    ID              reduce using rule 99 (while_end -> .)
+    IF              reduce using rule 99 (while_end -> .)
+    WHILE           reduce using rule 99 (while_end -> .)
+    PRINT           reduce using rule 99 (while_end -> .)
+    LLVEDER         reduce using rule 99 (while_end -> .)
+    RETURN          reduce using rule 99 (while_end -> .)
 
+    while_end                      shift and go to state 210
 
 state 209
 
-    (33) CONDICION_P -> ELSE LLVEIZQ ESTATUTO_P LLVEDER .
+    (33) CONDICION_P -> ELSE else_jump . LLVEIZQ ESTATUTO_P LLVEDER if_end
 
-    ID              reduce using rule 33 (CONDICION_P -> ELSE LLVEIZQ ESTATUTO_P LLVEDER .)
-    IF              reduce using rule 33 (CONDICION_P -> ELSE LLVEIZQ ESTATUTO_P LLVEDER .)
-    FOR             reduce using rule 33 (CONDICION_P -> ELSE LLVEIZQ ESTATUTO_P LLVEDER .)
-    PRINT           reduce using rule 33 (CONDICION_P -> ELSE LLVEIZQ ESTATUTO_P LLVEDER .)
-    LLVEDER         reduce using rule 33 (CONDICION_P -> ELSE LLVEIZQ ESTATUTO_P LLVEDER .)
-    RETURN          reduce using rule 33 (CONDICION_P -> ELSE LLVEIZQ ESTATUTO_P LLVEDER .)
+    LLVEIZQ         shift and go to state 211
 
 
 state 210
 
-    (35) LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER .
+    (35) LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end .
 
-    ID              reduce using rule 35 (LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER .)
-    IF              reduce using rule 35 (LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER .)
-    FOR             reduce using rule 35 (LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER .)
-    PRINT           reduce using rule 35 (LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER .)
-    LLVEDER         reduce using rule 35 (LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER .)
-    RETURN          reduce using rule 35 (LOOP_FOR -> FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER .)
+    ID              reduce using rule 35 (LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end .)
+    IF              reduce using rule 35 (LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end .)
+    WHILE           reduce using rule 35 (LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end .)
+    PRINT           reduce using rule 35 (LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end .)
+    LLVEDER         reduce using rule 35 (LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end .)
+    RETURN          reduce using rule 35 (LOOP_WHILE -> WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end .)
+
+
+state 211
+
+    (33) CONDICION_P -> ELSE else_jump LLVEIZQ . ESTATUTO_P LLVEDER if_end
+    (29) ESTATUTO_P -> . ESTATUTO ESTATUTO_P
+    (30) ESTATUTO_P -> . empty
+    (24) ESTATUTO -> . ASIGNACION
+    (25) ESTATUTO -> . CONDICION
+    (26) ESTATUTO -> . LOOP_WHILE
+    (27) ESTATUTO -> . ESCRITURA
+    (28) ESTATUTO -> . FUNC_CALL
+    (75) empty -> .
+    (31) ASIGNACION -> . ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
+    (32) CONDICION -> . IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    (35) LOOP_WHILE -> . WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
+    (36) ESCRITURA -> . PRINT PARIZQ PRINTABLE PARDER
+    (41) FUNC_CALL -> . ID PARIZQ PARM PARDER
+
+    LLVEDER         reduce using rule 75 (empty -> .)
+    ID              shift and go to state 66
+    IF              shift and go to state 67
+    WHILE           shift and go to state 68
+    PRINT           shift and go to state 69
+
+    ESTATUTO_P                     shift and go to state 212
+    ESTATUTO                       shift and go to state 59
+    empty                          shift and go to state 60
+    ASIGNACION                     shift and go to state 61
+    CONDICION                      shift and go to state 62
+    LOOP_WHILE                     shift and go to state 63
+    ESCRITURA                      shift and go to state 64
+    FUNC_CALL                      shift and go to state 65
+
+state 212
+
+    (33) CONDICION_P -> ELSE else_jump LLVEIZQ ESTATUTO_P . LLVEDER if_end
+
+    LLVEDER         shift and go to state 213
+
+
+state 213
+
+    (33) CONDICION_P -> ELSE else_jump LLVEIZQ ESTATUTO_P LLVEDER . if_end
+    (95) if_end -> .
+
+    ID              reduce using rule 95 (if_end -> .)
+    IF              reduce using rule 95 (if_end -> .)
+    WHILE           reduce using rule 95 (if_end -> .)
+    PRINT           reduce using rule 95 (if_end -> .)
+    LLVEDER         reduce using rule 95 (if_end -> .)
+    RETURN          reduce using rule 95 (if_end -> .)
+
+    if_end                         shift and go to state 214
+
+state 214
+
+    (33) CONDICION_P -> ELSE else_jump LLVEIZQ ESTATUTO_P LLVEDER if_end .
+
+    ID              reduce using rule 33 (CONDICION_P -> ELSE else_jump LLVEIZQ ESTATUTO_P LLVEDER if_end .)
+    IF              reduce using rule 33 (CONDICION_P -> ELSE else_jump LLVEIZQ ESTATUTO_P LLVEDER if_end .)
+    WHILE           reduce using rule 33 (CONDICION_P -> ELSE else_jump LLVEIZQ ESTATUTO_P LLVEDER if_end .)
+    PRINT           reduce using rule 33 (CONDICION_P -> ELSE else_jump LLVEIZQ ESTATUTO_P LLVEDER if_end .)
+    LLVEDER         reduce using rule 33 (CONDICION_P -> ELSE else_jump LLVEIZQ ESTATUTO_P LLVEDER if_end .)
+    RETURN          reduce using rule 33 (CONDICION_P -> ELSE else_jump LLVEIZQ ESTATUTO_P LLVEDER if_end .)
 

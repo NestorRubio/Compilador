@@ -12,6 +12,7 @@ pOperands = []
 pOperators = []
 constTable = {}
 cuadruplos = []
+pSaltos = []
 tabla_var_dim = []
 
 
@@ -91,7 +92,7 @@ def p_ESTATUTO(p):
     '''
     ESTATUTO : ASIGNACION
              | CONDICION
-             | LOOP_FOR
+             | LOOP_WHILE
              | ESCRITURA
              | FUNC_CALL   
     '''
@@ -109,34 +110,34 @@ def p_ASIGNACION(p):
 
 def p_CONDICION(p):
     '''
-    CONDICION : IF PARIZQ EXPRESION PARDER LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
+    CONDICION : IF PARIZQ EXPRESION PARDER ver_if LLVEIZQ ESTATUTO_P LLVEDER CONDICION_P
     '''
 
 def p_CONDICION_P(p):
     '''
-    CONDICION_P : ELSE LLVEIZQ ESTATUTO_P LLVEDER
-                | empty
+    CONDICION_P : ELSE else_jump LLVEIZQ ESTATUTO_P LLVEDER if_end
+                | if_end
     '''
 
-def p_LOOP_FOR(p):
+def p_LOOP_WHILE(p):
     '''
-    LOOP_FOR : FOR PARIZQ CTE_INT COMMA CTE_INT COMMA CTE_INT PARDER LLVEIZQ ESTATUTO_P LLVEDER
+    LOOP_WHILE : WHILE add_jump PARIZQ EXPRESION PARDER ver_while LLVEIZQ ESTATUTO_P LLVEDER while_end
     '''
 
 def p_ESCRITURA(p):
     '''
-    ESCRITURA : PRINT PARIZQ PRINTABLE PRINTABLE_P PARDER
+    ESCRITURA : PRINT PARIZQ PRINTABLE PARDER
     '''
 
 def p_PRINTABLE(p):
     '''
-    PRINTABLE : EXPRESION
-              | CTE_STR
+    PRINTABLE : EXPRESION cuad_print PRINTABLE_P
+              | CTE_STR cuad_print_str PRINTABLE_P
     '''
 
 def p_PRINTABLE_P(p):
     '''
-    PRINTABLE_P : COMMA PRINTABLE PRINTABLE_P
+    PRINTABLE_P : COMMA PRINTABLE
                 | empty
     '''
 
@@ -252,8 +253,9 @@ global_int_addr = 5000
 global_float_addr = 13000
 global_char_addr = 21000
 global_bool_addr = 29000
+cte_string_addr = 37000
 
-asigna_direccion = dir.Direcciones(global_int_addr, global_float_addr, global_char_addr, global_bool_addr)
+asigna_direccion = dir.Direcciones(global_int_addr, global_float_addr, global_char_addr, global_bool_addr, cte_string_addr)
 
 
 #ESPACIO DE MEMORIA DEFAULT DE TIPOS DE DATOS
@@ -325,7 +327,7 @@ def p_pila_operando_int(p):
     idName = p[-1]
     addr = asigna_direccion.cte_var_addr('int')
     if(p[-1] not in constTable):
-        constTable[p[-1]] = { 'address' : addr, 'type' : 'int'}
+        constTable[idName] = { 'address' : addr, 'type' : 'int'}
     pOperands.append({'name' : idName, 'type' : 'int', 'address' : addr})
 
 def p_pila_operando_float(p):
@@ -334,7 +336,7 @@ def p_pila_operando_float(p):
     idName = p[-1]
     addr = asigna_direccion.cte_var_addr('float')
     if(p[-1] not in constTable):
-        constTable[p[-1]] = { 'address' : addr, 'type' : 'float'}
+        constTable[idName] = { 'address' : addr, 'type' : 'float'}
     pOperands.append({'name' : idName, 'type' : 'float', 'address' : addr})
 
 def p_pila_operando_char(p):
@@ -343,7 +345,7 @@ def p_pila_operando_char(p):
     idName = p[-1]
     addr = asigna_direccion.cte_var_addr('char')
     if(p[-1] not in constTable):
-        constTable[p[-1]] = { 'address' : addr, 'type' : 'char'}
+        constTable[idName] = { 'address' : addr, 'type' : 'char'}
     pOperands.append({'name' : idName, 'type' : 'char', 'address' : addr})
 
 def p_pila_operadores_add(p):
@@ -416,7 +418,7 @@ def cuad_gen(op):
             resType = cuboSemantico[left_operando['type']][right_operando['type']][operator]
             if(resType != 'err'):
                 addr = asigna_direccion.temp_var_addr(resType)
-                cuadruplos.append([operator, left_operando, right_operando, addr])
+                cuadruplos.append([operator, left_operando['address'], right_operando['address'], addr])
                 pOperands.append({'address' : addr, 'name' : 'temp', 'type' : resType })
             else:
                 print("Type Mismatch", right_operando['name'], right_operando['type'], left_operando['name'], left_operando['type'], operator)
@@ -428,7 +430,74 @@ def p_cuad_return(p):
     ret = pOperands.pop()
     funcType = dirFunc[currentFunc]['type']
     if(ret['type'] == funcType):
-        cuadruplos.append(['RET', '-', '-', ret])
+        cuadruplos.append(['RET', '-', '-', ret['address']])
+    else:
+        print("Return must be same type as function")
+        sys.exit()
+
+def p_ver_if(p):
+    'ver_if :'
+    global pOperands, cuadruplos, pSaltos
+    exp = pOperands.pop()
+    if(exp['type'] != 'bool'):
+        print("Expreson in IF statement needs to be boolean")
+        sys.exit()
+    else:
+        cuadruplos.append(['GOTOF', exp['address'], '', ''])
+        pSaltos.append(len(cuadruplos) - 1)
+
+def p_if_end(p):
+    'if_end :'
+    global pSaltos, cuadruplos
+    end = pSaltos.pop()
+    cuadruplos[end][3] = len(cuadruplos)
+
+def p_else_jump(p):
+    'else_jump :'
+    global pSaltos, cuadruplos
+    cuadruplos.append(['GOTO', '', '', ''])
+    false = pSaltos.pop()
+    pSaltos.append(len(cuadruplos)-1)
+    cuadruplos[false][3] = len(cuadruplos)
+
+def p_add_jump(p):
+    'add_jump :'
+    global pSaltos, cuadruplos
+    pSaltos.append(len(cuadruplos))
+
+def p_ver_while(p):
+    'ver_while :'
+    global pSaltos, cuadruplos, pOperands
+    exp = pOperands.pop()
+    if(exp['type'] != 'bool'):
+        print("resulting type of while expresion must be boolean")
+        sys.exit()
+    else:
+        cuadruplos.append(['GOTOF', exp['address'], '', ''])
+        pSaltos.append(len(cuadruplos)-1)
+
+
+def p_while_end(p):
+    'while_end :'
+    global pSaltos, cuadruplos
+    end = pSaltos.pop()
+    ret = pSaltos.pop()
+    cuadruplos.append(['GOTO', '', '', ret])
+    cuadruplos[end][3] = len(cuadruplos)
+
+def p_cuad_print(p):
+    'cuad_print :'
+    global pOperands, cuadruplos
+    result = pOperands.pop()
+    cuadruplos.append(['PRINT', '', '', result['address']])
+
+def p_cuad_print_str(p):
+    'cuad_print_str :'
+    global pOperands, cuadruplos
+    addr = asigna_direccion.cte_var_addr('string')
+    constTable[p[-1]] = {'address' : addr, 'type' : 'string'}
+    cuadruplos.append(['PRINT', '', '', addr])
+
 
 parser = yacc.yacc()
 f = open("./test1.txt", "r")

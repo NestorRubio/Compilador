@@ -4,11 +4,22 @@ var float boba, memo, santi, pucha;
 var int saof, paro2;
 var bool si, no;
 
-func int condi(){
+func int condi(int meme, float juan){
 
-    memo = 6 / (5 + 8) * 2;
-    si = memo > 4 && 1 <= 3 || memo < 8 && paro2 != pucha;
-    return si;
+    memo = 6 / (5 + 8) * 2 - 6.8;
+
+    si = memo > 19 && 32 <= 3 || memo < 8 && paro2 != pucha;
+    print(memo, "Hola soy estudiante")
+    if(memo > 6 || si){
+        paro2 = 9;
+
+        while(paro2 > 1){
+            paro2 = paro2 - 1;
+        }
+    }else{
+        paro2 = 2;
+    }
+    return paro2;
 }
 
 void main(){

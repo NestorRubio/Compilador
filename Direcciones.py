@@ -2,7 +2,7 @@ import sys
 
 class Direcciones:
 
-    def __init__(self, integers, floats, chars, bools):
+    def __init__(self, integers, floats, chars, bools, str):
 
         self.integers = integers
         self.module_int = integers + 2000
@@ -24,6 +24,9 @@ class Direcciones:
         self.cte_bool = self.module_bool + 2000
         self.temp_bool = self.cte_bool + 2000
 
+
+        self.cte_string = str
+
         self.GI = 0
         self.GF = 0
         self.GC = 0
@@ -43,6 +46,8 @@ class Direcciones:
         self.TF = 0
         self.TC = 0
         self.TB = 0
+
+        self.CS = 0
 
     def global_var_addr(self, type):
         if(type == 'int'):
@@ -166,4 +171,11 @@ class Direcciones:
             else:
                 self.CB = self.CB + 1
                 return self.CB + self.cte_bool - 1
+        elif(type == 'string'):
+            if(self.CS >= self.cte_string + 2000):
+                print("Out of memory")
+                sys.exit()
+            else:
+                self.CS = self.CS + 1
+                return self.CS + self.cte_string - 1
     
