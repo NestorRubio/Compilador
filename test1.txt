@@ -6,21 +6,25 @@ var bool si, no;
 
 func int condi(int meme, float juan){
 
-    memo = 6 / (5 + 8) * 2 - 6.8;
+    meme = 6 / (5 + 8) * 2 - 6.8;
+    print(meme, "Hola soy estudiante")
+    if(meme > 6){
+        juan = 9;
 
-    si = memo > 19 && 32 <= 3 || memo < 8 && paro2 != pucha;
-    print(memo, "Hola soy estudiante")
-    if(memo > 6 || si){
-        paro2 = 9;
-
-        while(paro2 > 1){
-            paro2 = paro2 - 1;
+        while(juan > 1){
+            meme = juan - 1;
         }
     }else{
-        paro2 = 2;
+        juan = 2;
     }
-    return paro2;
+    return meme;
+}
+
+func bool brinco(float azul, int reno, int saguish){
+    condi(reno, azul)
+    return 3 < 6;
 }
 
 void main(){
+ 
 }

@@ -13,6 +13,10 @@ pOperators = []
 constTable = {}
 cuadruplos = []
 pSaltos = []
+paramCount = 0
+tempCounter = 0
+paramPtr = 0
+callFunc = ''
 tabla_var_dim = []
 
 
@@ -48,7 +52,8 @@ def p_VARS_PPP(p):
 
 def p_FUNCS(p):
     '''
-    FUNCS : FUNC TYPE_P ID ADD_FUNC PARIZQ PARAMS PARDER LLVEIZQ ESTATUTO_P RETURN EXPRESION cuad_return PTOCOMA LLVEDER
+    FUNCS : FUNC TYPE ID ADD_FUNC PARIZQ PARAMS PARDER LLVEIZQ func_jump ESTATUTO_P RETURN EXPRESION cuad_return PTOCOMA LLVEDER endFunc
+          | FUNC VOID CURR_TYPE ID ADD_FUNC PARIZQ PARAMS PARDER LLVEIZQ func_jump ESTATUTO_P LLVEDER endFunc
     '''
 
 def p_FUNCS_P(p):
@@ -65,27 +70,21 @@ def p_TYPE(p):
          | CHAR CURR_TYPE
     '''
 
-def p_TYPE_P(p):
-    '''
-    TYPE_P : TYPE
-           | VOID CURR_TYPE
-    '''
-
 def p_PARAMS(p):
     '''
-    PARAMS : TYPE ID ADD_VAR PARAMS_P
+    PARAMS : TYPE ID ADD_VAR update_param_table PARAMS_P
            | empty
     '''
 
 def p_PARAMS_P(p):
     '''
-    PARAMS_P : COMMA TYPE ID ADD_VAR PARAMS_P
+    PARAMS_P : COMMA TYPE ID ADD_VAR update_param_table PARAMS_P
              | empty
     '''
 
 def p_MAIN_G(p):
     '''
-    MAIN_G : VOID MAIN PARIZQ PARDER LLVEIZQ ESTATUTO_P LLVEDER
+    MAIN_G : VOID MAIN change_func PARIZQ PARDER LLVEIZQ ESTATUTO_P LLVEDER endProg
     '''
 
 def p_ESTATUTO(p):
@@ -143,26 +142,19 @@ def p_PRINTABLE_P(p):
 
 def p_FUNC_CALL(p):
     '''
-    FUNC_CALL : ID PARIZQ PARM PARDER
+    FUNC_CALL : ID ver_func_id_era PARIZQ PARM ver_param_num PARDER cuad_gosub 
     '''
 
 def p_PARM(p):
     '''
-    PARM : PARM_P
+    PARM : EXPRESION ver_param PARM_P
          | empty
     '''
 
 def p_PARM_P(p):
     '''
-    PARM_P : CTE_INT PARM_PP
-           | CTE_FLT PARM_PP
-           | ID PARM_PP
-    '''
-
-def p_PARM_PP(p):
-    '''
-    PARM_PP : COMMA PARM_P
-             | empty
+    PARM_P : COMMA EXPRESION ver_param PARM_P
+           | empty
     '''
 
 def p_EXPRESION(p):
@@ -274,7 +266,7 @@ currentType = 'void'
 def p_CREATE_DIRFUNC(p):
     'CREATE_DIRFUNC :'
     global currentFunc, currentType
-    dirFunc[currentFunc] = {'type' : currentType, 'varsTable' : {}, 'start_Address' : 0, 'memSize' : 0}
+    dirFunc[currentFunc] = {'type' : currentType, 'varsTable' : {}, 'paramTable' : [],'start_Address' : 0, 'memSize' : 0}
 
 def p_CURR_TYPE(p):
     'CURR_TYPE :'
@@ -300,7 +292,7 @@ def p_ADD_FUNC(p):
     global currentFunc, currentType
     currentFunc = p[-1]
     if(dirFunc.get(currentFunc) == None):
-      dirFunc[currentFunc] = {'type' : currentType, 'varsTable' : {}, 'start_Address' : 0, 'memSize' : 0}
+      dirFunc[currentFunc] = {'type' : currentType, 'varsTable' : {}, 'paramTable' : [], 'start_Address' : 0, 'memSize' : 0}
     else:
         print('more than one function declared with ', currentFunc, ' name')
         sys.exit()
@@ -312,11 +304,11 @@ def p_pila_operando_id(p):
     if(idName in dirFunc[currentFunc]['varsTable']):     
         idType = dirFunc[currentFunc]['varsTable'][idName].get('type')
         idAddress = dirFunc[currentFunc]['varsTable'][idName].get('address')
-    elif(idName in dirFunc['global']['varsTable']):
-        idType = dirFunc['global']['varsTable'][idName].get('type')
-        idAddress = dirFunc['global']['varsTable'][idName].get('address')
+#    elif(idName in dirFunc['global']['varsTable']):
+#        idType = dirFunc['global']['varsTable'][idName].get('type')
+#        idAddress = dirFunc['global']['varsTable'][idName].get('address')
     else:
-        print('Variable ' + idName + ' address not found in global nor ' + currentFunc) 
+        print('Variable ' + idName + ' address not found in ' + currentFunc) 
         sys.exit()
 
     pOperands.append({'name' : idName, 'type' : idType, 'address' : idAddress})
@@ -409,7 +401,7 @@ def p_cuad_asign(p):
 
 
 def cuad_gen(op):
-    global pOperands, pOperators, cuboSemantico, cuadruplos
+    global pOperands, pOperators, cuboSemantico, cuadruplos, tempCounter
     if(len(pOperators) > 0):
         if(pOperators[-1] in op):
             right_operando = pOperands.pop()
@@ -420,6 +412,7 @@ def cuad_gen(op):
                 addr = asigna_direccion.temp_var_addr(resType)
                 cuadruplos.append([operator, left_operando['address'], right_operando['address'], addr])
                 pOperands.append({'address' : addr, 'name' : 'temp', 'type' : resType })
+                tempCounter += 1
             else:
                 print("Type Mismatch", right_operando['name'], right_operando['type'], left_operando['name'], left_operando['type'], operator)
                 sys.exit()
@@ -498,6 +491,88 @@ def p_cuad_print_str(p):
     constTable[p[-1]] = {'address' : addr, 'type' : 'string'}
     cuadruplos.append(['PRINT', '', '', addr])
 
+def p_change_func(p):
+    'change_func :'
+    global currentFunc
+    currentFunc = 'global'
+
+
+##Function Declaration##
+def p_update_param_table(p):
+    'update_param_table :'
+    global dirFunc, currentFunc, currentType, currentId, paramCount
+    addr = dirFunc[currentFunc]['varsTable'][currentId].get('address')
+    type = dirFunc[currentFunc]['varsTable'][currentId].get('type')
+    dirFunc[currentFunc]['paramTable'].append([type, addr])
+    paramCount += 1
+
+def p_func_jump(p):
+    'func_jump :'
+    global dirFunc, cuadruplos, currentFunc, paramCount
+    dirFunc[currentFunc]['start_Address'] = len(cuadruplos)
+    dirFunc[currentFunc]['memSize'] += paramCount
+    paramCount = 0
+    #print(len(cuadruplos), "Numero de cuadruplos")
+    
+def p_endFunc(p):
+    'endFunc :'
+    global cuadruplos, currentFunc, dirFunc, tempCounter
+    dirFunc[currentFunc]['memSize'] += tempCounter
+    cuadruplos.append(['ENDFUNC', '', '' , ''])
+    tempCounter = 0
+
+##Function Call
+
+def p_ver_func_id_era(p):
+    'ver_func_id_era :'
+    global dirFunc, cuadruplos, callFunc
+    callFunc = p[-1]
+    if(dirFunc.get(p[-1]) == None):
+        print("Funcion ", p[-1], " no existe")
+        sys.exit()
+    else:
+        size = dirFunc[p[-1]]['memSize']
+        cuadruplos.append(['ERA', '', '', size])
+
+
+
+def p_ver_param(p):
+    'ver_param :'
+    global pOperands, cuadruplos, callFunc, paramPtr, dirFunc
+    arg = pOperands.pop()
+    argType = arg.get('type')
+    paramType = dirFunc[callFunc]['paramTable'][paramPtr][0]
+    if(argType != paramType):
+        print("Wrong argument type in function", callFunc, "call. Argument", paramPtr, "should be", paramType, "but", argType, "was given instead")
+        sys.exit()
+    else:
+        paramAddr = dirFunc[callFunc]['paramTable'][paramPtr][1]
+        argAddr = arg.get('address')
+        cuadruplos.append(['PARAM', '',argAddr, paramAddr])
+        paramPtr += 1
+
+def p_ver_param_num(p):
+    'ver_param_num :'
+    global paramPtr , dirFunc, callFunc
+    paramNum = len(dirFunc[callFunc]['paramTable'])
+    if(paramNum != paramPtr):
+        print("Wrong amount of arguments for func", callFunc, "call")
+        sys.exit()
+
+def p_cuad_gosub(p):
+    'cuad_gosub :'
+    global cuadruplos, callFunc, dirFunc
+    dirIni = dirFunc[callFunc].get('start_Address')
+    cuadruplos.append(['GOSUB', callFunc, '', dirIni]) 
+
+#contador de variables temporales
+#reiniciarlo al inicio de cada modulo
+
+
+def p_endProg(p):
+    'endProg :'
+    global cuadruplos
+    cuadruplos.append(['ENDPROG', '', '', ''])
 
 parser = yacc.yacc()
 f = open("./test1.txt", "r")
