@@ -178,4 +178,36 @@ class Direcciones:
             else:
                 self.CS = self.CS + 1
                 return self.CS + self.cte_string - 1
-    
+
+
+    def next_addr_var_dim(self, type, size):
+        if(type == 'int'):
+            if(self.GI >= self.module_int):
+                print("Out of memory")
+                sys.exit()
+            else:
+                self.GI = self.GI + size 
+        elif(type == 'float'):
+            if(self.GF >= self.module_float):
+                print("Out of memory")
+                sys.exit()
+            else:
+                self.GF = self.GF + size
+        elif(type == 'char'):
+            if(self.GC >= self.module_char):
+                print("Out of memory")
+                sys.exit()
+            else:
+                self.GC = self.GC + size
+        elif(type == 'bool'):
+            if(self.GB >= self.module_bool):
+                print("Out of memory")
+                sys.exit()
+            else:
+                self.GB = self.GB + size
+
+    def reset_local_addr(self):
+        self.MI = 0
+        self.MF = 0
+        self.MC = 0
+        self.MB = 0

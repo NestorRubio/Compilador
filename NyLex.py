@@ -4,8 +4,6 @@ import sys
 #TOEKNS DEL LENGUAJE
 tokens = [
     'PTOCOMA',
-    'DOSPTOS',
-    'PUNTO',
     'COMMA',
     'CORIZQ',
     'CORDER',
@@ -38,7 +36,6 @@ tokens = [
 palabrasResv = {
     'program' : 'PROGRAM',
     'var' : 'VAR',
-    'mat' : 'MAT',
     'int' : 'INT',
     'float' : 'FLOAT',
     'char' : 'CHAR',
@@ -50,6 +47,7 @@ palabrasResv = {
     'else' : 'ELSE',
     'while' : 'WHILE',
     'print' : 'PRINT',
+    'read' : 'READ',
     'func' : 'FUNC'
 }
 
@@ -64,7 +62,7 @@ def t_ID(t):
     return t
 
 def t_CTE_FLT(t):
-    r'[-]?\d+\.\d+'
+    r'-?\d+\.\d+'
     try:
         t.value = float(t.value)
     except ValueError:
@@ -73,7 +71,7 @@ def t_CTE_FLT(t):
     return t
 
 def t_CTE_INT(t):
-    r'[-]?\d+'
+    r'-?\d+'
     try:
         t.value = int(t.value)
     except ValueError:
@@ -106,7 +104,6 @@ def t_error(t):
 #REGLAS PARA SYMBOLOS
 
 t_PTOCOMA = r'\;'
-t_DOSPTOS = r'\:'
 t_COMMA = r'\,'
 t_CORIZQ = r'\['
 t_CORDER = r'\]'

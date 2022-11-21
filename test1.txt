@@ -1,8 +1,11 @@
-program Cale1;
+program fibonacci;
 
 var float boba, memo, santi, pucha;
+var int enntero, masorca, menudo, reno;
+var int huevo[5][7];
 var int saof, paro2;
 var bool si, no;
+
 
 func int condi(int meme, float juan){
 
@@ -21,10 +24,13 @@ func int condi(int meme, float juan){
 }
 
 func bool brinco(float azul, int reno, int saguish){
-    condi(reno, azul)
+    condi(reno, 5.0)
+    read(saguish)
     return 3 < 6;
 }
 
 void main(){
- 
+    brinco(boba, paro2, saof + 2)
+    read(santi)
+    saof = huevo[2+5][0];
 }

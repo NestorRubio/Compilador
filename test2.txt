@@ -1,0 +1,39 @@
+program factorial;
+
+var int uno, count, factorial_while, factorial_recursion, aux;
+ 
+
+func int calcFactorial(int fac, int ret){
+    
+    if(fac == 1 || fac == 0){
+        ret = 1;
+    }else{
+        ret = fac * calcFactorial(fac - 1, 0);
+    }
+
+    return ret;
+} 
+
+/*
+Este es un bloque de comentario
+*/
+
+void main(){
+
+    read(uno)
+    aux = 0;
+    count = 1;
+    factorial_while = 1;
+
+    while(count <= uno){
+
+        factorial_while = factorial_while * count;
+        count = count + 1;
+    }
+
+    print("Factorial Loop", factorial_while)
+
+    factorial_recursion = calcFactorial(uno, aux);
+
+    print("Factorial Recursion", factorial_recursion)
+}

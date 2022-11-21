@@ -1,4 +1,4 @@
-import ply.yacc as yacc
+import ply.yacc
 import sys
 import pprint
 
@@ -19,6 +19,11 @@ paramPtr = 0
 callFunc = ''
 tabla_var_dim = []
 
+dimVarAux = ''
+dimCounter = 0
+
+
+cuadruplos.append(['GOTO', '', '', ''])
 
 #GRAMATICA
 def p_PROGRAMA(p):
@@ -29,7 +34,7 @@ def p_PROGRAMA(p):
 def p_VARS(p):
     '''
     VARS : VAR TYPE ID ADD_VAR VARS_PP PTOCOMA
-         | MAT TYPE ID CORIZQ CTE_INT CORDER VARS_PPP PTOCOMA
+         | VAR TYPE ID ADD_VAR CORIZQ CTE_INT add_dim CORDER MAT_AUX actAddr PTOCOMA
     '''
 
 def p_VARS_P(p):
@@ -44,10 +49,10 @@ def p_VARS_PP(p):
             | empty
     '''
 
-def p_VARS_PPP(p):
+def p_MAT_AUX(p):
     '''
-    VARS_PPP : CORIZQ CTE_INT CORDER
-             | empty
+    MAT_AUX : CORIZQ CTE_INT add_dim CORDER
+            | empty
     '''
 
 def p_FUNCS(p):
@@ -84,7 +89,7 @@ def p_PARAMS_P(p):
 
 def p_MAIN_G(p):
     '''
-    MAIN_G : VOID MAIN change_func PARIZQ PARDER LLVEIZQ ESTATUTO_P LLVEDER endProg
+    MAIN_G : VOID MAIN set_start change_func PARIZQ PARDER LLVEIZQ ESTATUTO_P LLVEDER endProg
     '''
 
 def p_ESTATUTO(p):
@@ -93,7 +98,8 @@ def p_ESTATUTO(p):
              | CONDICION
              | LOOP_WHILE
              | ESCRITURA
-             | FUNC_CALL   
+             | LECTURA 
+             | FUNC_CALL  
     '''
 
 def p_ESTATUTO_P(p):
@@ -140,9 +146,19 @@ def p_PRINTABLE_P(p):
                 | empty
     '''
 
+def p_LECTURA(p):
+    '''
+    LECTURA : READ PARIZQ ID cuad_read PARDER
+    '''
+
 def p_FUNC_CALL(p):
     '''
-    FUNC_CALL : ID ver_func_id_era PARIZQ PARM ver_param_num PARDER cuad_gosub 
+    FUNC_CALL : ID ver_func_id_era PARIZQ fondo_falso_add PARM ver_param_num PARDER fondo_falso_pop cuad_gosub 
+    '''
+
+def p_FUNC_CALL_EXP(p): #Al final agregar las generaciones del cuadruplo y pushear a pila de operandos la dir global
+    '''
+    FUNC_CALL_EXP : ID ver_func_id_era_exp PARIZQ fondo_falso_add PARM ver_param_num PARDER fondo_falso_pop cuad_gosub
     '''
 
 def p_PARM(p):
@@ -228,6 +244,14 @@ def p_VAR_CTE(p):
             | CTE_INT pila_operando_int
             | CTE_FLT pila_operando_float
             | CTE_CHAR pila_operando_char
+            | FUNC_CALL_EXP
+            | ID pila_operando_id CORIZQ ver_dim fondo_falso_add EXPRESION cuad_ver CORDER fondo_falso_pop matAux ver_dir_num cuad_var_dim
+    '''
+
+def p_matAux(p):
+    '''
+    matAux : CORIZQ ver_dim fondo_falso_add EXPRESION cuad_ver CORDER fondo_falso_pop
+           | empty
     '''
 
 def p_empty(p):
@@ -282,17 +306,23 @@ def p_ADD_VAR(p):
             addr = asigna_direccion.global_var_addr(currentType)
         else:
             addr = asigna_direccion.module_var_addr(currentType)
-        dirFunc[currentFunc]['varsTable'][currentId] = {'name' : currentId, 'type' : currentType, 'address' : addr, 'dim' : 0}
+        dirFunc[currentFunc]['varsTable'][currentId] = {'type' : currentType, 'address' : addr, 'dim' : []}
     else:
         print('multiple variables cannot have the same name in the same scope', currentId)
         sys.exit()
 
 def p_ADD_FUNC(p):
     'ADD_FUNC :'
-    global currentFunc, currentType
+    global currentFunc, currentType, asigna_direccion
     currentFunc = p[-1]
     if(dirFunc.get(currentFunc) == None):
-      dirFunc[currentFunc] = {'type' : currentType, 'varsTable' : {}, 'paramTable' : [], 'start_Address' : 0, 'memSize' : 0}
+        if(dirFunc['global']['varsTable'].get(currentFunc) == None):
+            dirFunc[currentFunc] = {'type' : currentType, 'varsTable' : {}, 'paramTable' : [], 'start_Address' : 0, 'memSize' : 0}
+            addr = asigna_direccion.global_var_addr(currentType)
+            dirFunc['global']['varsTable'][currentFunc] = {'type' : currentType, 'address' : addr, 'dim' : []}
+        else:
+            print("Functions cannot have same name as global variables")
+            sys.exit()
     else:
         print('more than one function declared with ', currentFunc, ' name')
         sys.exit()
@@ -308,7 +338,7 @@ def p_pila_operando_id(p):
 #        idType = dirFunc['global']['varsTable'][idName].get('type')
 #        idAddress = dirFunc['global']['varsTable'][idName].get('address')
     else:
-        print('Variable ' + idName + ' address not found in ' + currentFunc) 
+        print('Variable ', idName, ' address not found in ', currentFunc, 'nor global') 
         sys.exit()
 
     pOperands.append({'name' : idName, 'type' : idType, 'address' : idAddress})
@@ -317,27 +347,33 @@ def p_pila_operando_int(p):
     'pila_operando_int :'
     global currentFunc, pOperands, dirFunc, asigna_direccion, constTable
     idName = p[-1]
-    addr = asigna_direccion.cte_var_addr('int')
     if(p[-1] not in constTable):
+        addr = asigna_direccion.cte_var_addr('int')
         constTable[idName] = { 'address' : addr, 'type' : 'int'}
+    else:
+        addr = constTable[idName].get('address')
     pOperands.append({'name' : idName, 'type' : 'int', 'address' : addr})
 
 def p_pila_operando_float(p):
     'pila_operando_float :'
     global currentFunc, pOperands, dirFunc, asigna_direccion
     idName = p[-1]
-    addr = asigna_direccion.cte_var_addr('float')
     if(p[-1] not in constTable):
+        addr = asigna_direccion.cte_var_addr('float')
         constTable[idName] = { 'address' : addr, 'type' : 'float'}
+    else:
+        addr = constTable[idName].get('address')
     pOperands.append({'name' : idName, 'type' : 'float', 'address' : addr})
 
 def p_pila_operando_char(p):
     'pila_operando_char :'
     global currentFunc, pOperands, dirFunc, asigna_direccion
     idName = p[-1]
-    addr = asigna_direccion.cte_var_addr('char')
     if(p[-1] not in constTable):
+        addr = asigna_direccion.cte_var_addr('char')
         constTable[idName] = { 'address' : addr, 'type' : 'char'}
+    else:
+        addr = constTable[idName].get('address')
     pOperands.append({'name' : idName, 'type' : 'char', 'address' : addr})
 
 def p_pila_operadores_add(p):
@@ -401,7 +437,7 @@ def p_cuad_asign(p):
 
 
 def cuad_gen(op):
-    global pOperands, pOperators, cuboSemantico, cuadruplos, tempCounter
+    global pOperands, pOperators, cuboSemantico, cuadruplos, tempCounter, asigna_direccion
     if(len(pOperators) > 0):
         if(pOperators[-1] in op):
             right_operando = pOperands.pop()
@@ -411,11 +447,21 @@ def cuad_gen(op):
             if(resType != 'err'):
                 addr = asigna_direccion.temp_var_addr(resType)
                 cuadruplos.append([operator, left_operando['address'], right_operando['address'], addr])
-                pOperands.append({'address' : addr, 'name' : 'temp', 'type' : resType })
+                pOperands.append({'name' : 'temp', 'type' : resType,'address' : addr })
                 tempCounter += 1
             else:
                 print("Type Mismatch", right_operando['name'], right_operando['type'], left_operando['name'], left_operando['type'], operator)
                 sys.exit()
+
+def p_cuad_read(p):
+    'cuad_read :'
+    global dirFunc, currentFunc, cuadruplos
+    if(dirFunc[currentFunc]['varsTable'].get(p[-1]) == None):
+        print("Variable", p[-1], "that is being read does not exist in", currentFunc)
+        sys.exit()
+    else:
+        addr = dirFunc[currentFunc]['varsTable'][p[-1]].get('address')
+        cuadruplos.append(['READ', '', '', addr])
 
 def p_cuad_return(p):
     'cuad_return :'
@@ -423,7 +469,7 @@ def p_cuad_return(p):
     ret = pOperands.pop()
     funcType = dirFunc[currentFunc]['type']
     if(ret['type'] == funcType):
-        cuadruplos.append(['RET', '-', '-', ret['address']])
+        cuadruplos.append(['RET', '', '', ret['address']])
     else:
         print("Return must be same type as function")
         sys.exit()
@@ -516,25 +562,40 @@ def p_func_jump(p):
     
 def p_endFunc(p):
     'endFunc :'
-    global cuadruplos, currentFunc, dirFunc, tempCounter
+    global cuadruplos, currentFunc, dirFunc, tempCounter, asigna_direccion
     dirFunc[currentFunc]['memSize'] += tempCounter
     cuadruplos.append(['ENDFUNC', '', '' , ''])
     tempCounter = 0
+    asigna_direccion.reset_local_addr()
 
-##Function Call
+
+##Function Call - Estatuto
 
 def p_ver_func_id_era(p):
     'ver_func_id_era :'
     global dirFunc, cuadruplos, callFunc
     callFunc = p[-1]
+    if(dirFunc[callFunc].get('type') != 'void'):
+        print("Lone function call must be made by a void function")
+        sys.exit()
     if(dirFunc.get(p[-1]) == None):
         print("Funcion ", p[-1], " no existe")
         sys.exit()
     else:
-        size = dirFunc[p[-1]]['memSize']
-        cuadruplos.append(['ERA', '', '', size])
+        cuadruplos.append(['ERA', '', '', callFunc])
 
-
+def p_ver_func_id_era_exp(p):
+    'ver_func_id_era_exp :'
+    global dirFunc, cuadruplos, callFunc
+    callFunc = p[-1]
+    if(dirFunc[callFunc].get('type') == 'void'):
+        print("Void function cannot be part of expresion")
+        sys.exit()
+    if(dirFunc.get(p[-1]) == None):
+        print("Funcion ", p[-1], " no existe")
+        sys.exit()
+    else:
+        cuadruplos.append(['ERA', '', '', callFunc])
 
 def p_ver_param(p):
     'ver_param :'
@@ -561,26 +622,139 @@ def p_ver_param_num(p):
 
 def p_cuad_gosub(p):
     'cuad_gosub :'
-    global cuadruplos, callFunc, dirFunc
+    global cuadruplos, callFunc, dirFunc, paramPtr, pOperands
     dirIni = dirFunc[callFunc].get('start_Address')
-    cuadruplos.append(['GOSUB', callFunc, '', dirIni]) 
+    cuadruplos.append(['GOSUB', '', '', callFunc])
 
-#contador de variables temporales
-#reiniciarlo al inicio de cada modulo
+    type = dirFunc['global']['varsTable'][callFunc].get('type')
 
+    if(type != 'void'):
+        dirResFuncCall = dirFunc['global']['varsTable'][callFunc].get('address')
+        nextDir = asigna_direccion.temp_var_addr(type)
+        cuadruplos.append(['=', dirResFuncCall, '', nextDir])
+        pOperands.append({'name' : 'tempReturn', 'type' : type, 'address' : nextDir})
+
+    paramPtr = 0 
+
+
+#Generacion de codigo de Arreglos y Matrices
+
+def p_add_dim(p):
+    'add_dim :'
+    global dirFunc, currentFunc, currentId, constTable
+    if(p[-1] <= 0):
+        print("Array and Matrix delcaration index must be greater than 0")
+        sys.exit()
+    else:
+        addr = asigna_direccion.cte_var_addr('int')
+        dirFunc[currentFunc]['varsTable'][currentId]['dim'].append([p[-1]])
+        if(p[-1] not in constTable):
+            constTable[p[-1]] = { 'address' : addr, 'type' : 'int'}
+
+
+#Funcion para el salto de direcciones al declarar variable dimensionada
+def p_actAddr(p):
+    'actAddr :'
+    global dirFunc, currentFunc, currentId, currentType
+    dim = len(dirFunc[currentFunc]['varsTable'][currentId]['dim'])
+    size = 0
+    val1 = dirFunc[currentFunc]['varsTable'][currentId]['dim'][0][0]
+    if(dim == 2):
+        val2 = dirFunc[currentFunc]['varsTable'][currentId]['dim'][1][0]
+        size = val1 * val2
+        asigna_direccion.next_addr_var_dim(currentType, size-1)
+    elif(dim == 1):
+        asigna_direccion.next_addr_var_dim(currentType, val1-1)
+
+
+
+#Declaracion jala, trabajar en llamada!!!
+#Llamada
+
+def p_ver_dim(p):
+    'ver_dim :'
+    global dirFunc, pOperands, currentFunc, dimVarAux, dimCounter
+    if(dimCounter == 0):
+        top = pOperands.pop()
+        dimVarAux = top.get('name')
+
+    if(dirFunc[currentFunc]['varsTable'][dimVarAux]['dim'][dimCounter] == None):
+        print("This variable does not have dimensions therefore cannot be indexed", dimVarAux)
+        sys.exit()
+    dimCounter = dimCounter + 1
+
+def p_ver_dim_num(p):
+    'ver_dir_num :'
+    global dirFunc, dimVarAux, dimCounter, currentFunc
+    if(len(dirFunc[currentFunc]['varsTable'][dimVarAux]['dim']) != dimCounter):
+        print("Number of dimensions mismatch on variable", dimVarAux, "call")
+        sys.exit()
+
+def p_cuad_ver(p):
+    'cuad_ver :'
+    global pOperands, cuadruplos, dirFunc, constTable, currentFunc, dimCounter, dimVarAux
+    top = pOperands[-1].get('address')
+    val = dirFunc[currentFunc]['varsTable'][dimVarAux]['dim'][dimCounter-1][0]
+    valAddr = constTable[val].get('address')
+    cuadruplos.append(['VER', '', top, valAddr])
+
+
+#Cuadruplo para generar cuadruplo de direccion virtual de indexacion
+#Falta agregar direccion base de arreglos y matrices a tabla de constantes
+def p_cuad_var_dim(p):
+    'cuad_var_dim :'
+    global dimCounter, pOperands, currentFunc, asigna_direccion, dirFunc, constTable, dimVarAux
+    dirBase = dirFunc[currentFunc]['varsTable'][dimVarAux].get('address')
+    if(dirBase not in constTable):
+        addr = asigna_direccion.cte_var_addr('int')
+        constTable[dirBase] = { 'address' : addr, 'type' : 'int'}
+
+    if(dimCounter == 1):
+        addr = constTable[dirBase].get('address')
+        dim1 = pOperands.pop()
+        addrTempDir = asigna_direccion.temp_var_addr('int')
+        cuadruplos.append(['+', dim1.get('address'), addr, addrTempDir])
+        pOperands.append({'name' : 'indexVal', 'type' : 'int', 'address' : addrTempDir})    
+    elif(dimCounter == 2):
+        addr = constTable[dirBase].get('address')
+        dim2 = pOperands.pop()
+        dim1 = pOperands.pop()
+        numCol = constTable[dirFunc[currentFunc]['varsTable'][dimVarAux]['dim'][1][0]].get('address')
+        addrTempDir = asigna_direccion.temp_var_addr('int')
+        cuadruplos.append(['*', dim1.get('address'), numCol, addrTempDir])
+        addrTempDir2 = asigna_direccion.temp_var_addr('int')
+        cuadruplos.append(['+', addrTempDir, dim2.get('address'), addrTempDir2])
+        addrTempDir3 = asigna_direccion.temp_var_addr('int')
+        cuadruplos.append(['+', addrTempDir2, addr, addrTempDir3])
+        pOperands.append({'name' : 'indexVal', 'type' : 'int', 'address' : addrTempDir3})
+    dimCounter = 0
+
+def p_set_start(p):
+    'set_start :'
+    global cuadruplos
+    cuadruplos[0][3] = len(cuadruplos)
 
 def p_endProg(p):
     'endProg :'
     global cuadruplos
     cuadruplos.append(['ENDPROG', '', '', ''])
 
-parser = yacc.yacc()
-f = open("./test1.txt", "r")
-input = f.read()
-print(input)
-parser.parse(input)
-pprint.pprint(dirFunc)
-pprint.pprint(pOperands)
-pprint.pprint(pOperators)
-pprint.pprint(constTable)
-pprint.pprint(cuadruplos)
+
+parser = ply.yacc.yacc()
+
+if __name__ == '__main__':
+
+    fName = input()
+
+    with open(fName, "r") as f:
+        input = f.read()
+        parser.parse(input)
+        pprint.pprint(dirFunc)
+        pprint.pprint(constTable)
+        pprint.pprint(cuadruplos)
+        print("Compiled Successfully")
+        
+        context = {'dirFunc' : dirFunc, 'constTable' : constTable, 'cuadruplos' : cuadruplos}
+    with open(fName + ".o", "w") as f:
+        f.write(str(context))
+        
