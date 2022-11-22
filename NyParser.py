@@ -25,7 +25,10 @@ dimCounter = 0
 
 cuadruplos.append(['GOTO', '', '', ''])
 
-#GRAMATICA
+############
+#GRAMATICA#
+###########
+
 def p_PROGRAMA(p):
     '''
     PROGRAMA : PROGRAM CREATE_DIRFUNC ID PTOCOMA VARS_P FUNCS_P MAIN_G
@@ -110,7 +113,8 @@ def p_ESTATUTO_P(p):
 
 def p_ASIGNACION(p):
     '''
-    ASIGNACION : ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA 
+    ASIGNACION : ID pila_operando_id ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
+               | VAR_DIM ASIGN pila_operadores_add EXPRESION cuad_asign PTOCOMA
     '''
 
 def p_CONDICION(p):
@@ -156,7 +160,7 @@ def p_FUNC_CALL(p):
     FUNC_CALL : ID ver_func_id_era PARIZQ fondo_falso_add PARM ver_param_num PARDER fondo_falso_pop cuad_gosub 
     '''
 
-def p_FUNC_CALL_EXP(p): #Al final agregar las generaciones del cuadruplo y pushear a pila de operandos la dir global
+def p_FUNC_CALL_EXP(p):
     '''
     FUNC_CALL_EXP : ID ver_func_id_era_exp PARIZQ fondo_falso_add PARM ver_param_num PARDER fondo_falso_pop cuad_gosub
     '''
@@ -245,7 +249,13 @@ def p_VAR_CTE(p):
             | CTE_FLT pila_operando_float
             | CTE_CHAR pila_operando_char
             | FUNC_CALL_EXP
-            | ID pila_operando_id CORIZQ ver_dim fondo_falso_add EXPRESION cuad_ver CORDER fondo_falso_pop matAux ver_dir_num cuad_var_dim
+            | VAR_DIM
+    '''
+
+##Invocacion de variables dimensionadas
+def p_VAR_DIM(p):
+    '''
+    VAR_DIM : ID pila_operando_id CORIZQ ver_dim fondo_falso_add EXPRESION cuad_ver CORDER fondo_falso_pop matAux ver_dir_num cuad_var_dim
     '''
 
 def p_matAux(p):
@@ -263,14 +273,16 @@ def p_error(p):
     print("Syntax error in line " + str(p.lineno) + " " + str(p.value))
     sys.exit()
 
-#DIRECCIONES DE MEMORIA VIRTUAL
-
+#################################
+#DIRECCIONES DE MEMORIA VIRTUAL#
+################################
 global_int_addr = 5000
 global_float_addr = 13000
 global_char_addr = 21000
 global_bool_addr = 29000
 cte_string_addr = 37000
 
+#Iniciiasion de generador de direcciones
 asigna_direccion = dir.Direcciones(global_int_addr, global_float_addr, global_char_addr, global_bool_addr, cte_string_addr)
 
 
@@ -280,28 +292,34 @@ FLOAT_MEM_SIZE = 32
 BOOL_MEM_SIZE = 8
 CHAR_MEM_SIZE = 8
 
-dirFunc = {}
+dirFunc = {} #Directorio de funciones
 
 currentId = ''
 currentFunc = 'global'
 currentType = 'void'
 
-#PUNTOS NEURALGICOS
+##############################################
+#PUNTOS NEURALGICOS Y FUNCIONES DE ASISTENCIA#
+##############################################
+
+#CREACION DE "GLOBAL" EN DIRECTORIO DE FUNCIONES
 def p_CREATE_DIRFUNC(p):
     'CREATE_DIRFUNC :'
     global currentFunc, currentType
     dirFunc[currentFunc] = {'type' : currentType, 'varsTable' : {}, 'paramTable' : [],'start_Address' : 0, 'memSize' : 0}
 
+#ACTUALIZACION DE TIPO ACTUAL FUNCION/VARIABLE
 def p_CURR_TYPE(p):
     'CURR_TYPE :'
     global currentType 
     currentType = p[-1]
 
+#AGREGA VARIABLES A VARSTABLE DE SU FUNCION RESPECTIVA
 def p_ADD_VAR(p):
     'ADD_VAR :'
     global currentId, currentType, asigna_direccion
     currentId = p[-1]
-    if(dirFunc[currentFunc]['varsTable'].get(currentId) == None):
+    if(dirFunc[currentFunc]['varsTable'].get(currentId) == None): #VERIFICAR QUE VARIABLE NO EXISTA EN CONTEXTO ACTUAL
         if(currentFunc == 'global'):
             addr = asigna_direccion.global_var_addr(currentType)
         else:
@@ -311,6 +329,7 @@ def p_ADD_VAR(p):
         print('multiple variables cannot have the same name in the same scope', currentId)
         sys.exit()
 
+#DAR DE ALTA NUEVA FUNCION CON SU INFORMACION RESPECTIVA EN EL DIRFUNC
 def p_ADD_FUNC(p):
     'ADD_FUNC :'
     global currentFunc, currentType, asigna_direccion
@@ -327,6 +346,8 @@ def p_ADD_FUNC(p):
         print('more than one function declared with ', currentFunc, ' name')
         sys.exit()
 
+#AGREGA IDs A PILA DE OPERANDOS
+#VARIABLE DEBE ESTAR DECLARADA EN SU CONTEXTO
 def p_pila_operando_id(p):
     'pila_operando_id :'
     global currentFunc, pOperands, dirFunc
@@ -343,6 +364,7 @@ def p_pila_operando_id(p):
 
     pOperands.append({'name' : idName, 'type' : idType, 'address' : idAddress})
 
+#AGREGA CONSTANTES INT A PILA DE OPERANDOS
 def p_pila_operando_int(p):
     'pila_operando_int :'
     global currentFunc, pOperands, dirFunc, asigna_direccion, constTable
@@ -354,6 +376,7 @@ def p_pila_operando_int(p):
         addr = constTable[idName].get('address')
     pOperands.append({'name' : idName, 'type' : 'int', 'address' : addr})
 
+#AGREGA CONSTANTES FLOAT A PILA DE OPERANDOS
 def p_pila_operando_float(p):
     'pila_operando_float :'
     global currentFunc, pOperands, dirFunc, asigna_direccion
@@ -365,6 +388,7 @@ def p_pila_operando_float(p):
         addr = constTable[idName].get('address')
     pOperands.append({'name' : idName, 'type' : 'float', 'address' : addr})
 
+#AGREGA CONSTANTES CHARS A PILA DE OPERANDOS
 def p_pila_operando_char(p):
     'pila_operando_char :'
     global currentFunc, pOperands, dirFunc, asigna_direccion
@@ -376,16 +400,19 @@ def p_pila_operando_char(p):
         addr = constTable[idName].get('address')
     pOperands.append({'name' : idName, 'type' : 'char', 'address' : addr})
 
+#AGREGA OPERADORES A LA PILA DE OPERADORES
 def p_pila_operadores_add(p):
     'pila_operadores_add :'
     operador = p[-1]
     pOperators.append(operador)
 
+#AGREGA FONDO FALSO A PILA DE OPERADORES
 def p_fondo_falso_add(p):
     'fondo_falso_add :'
     global pOperators
     pOperators.append('(')
 
+#SACA EL FONDO FALSO DE PILA DE OPERADORES
 def p_fondo_falso_pop(p):
     'fondo_falso_pop :'
     global pOperators
@@ -418,6 +445,7 @@ def p_cuad_muldiv(p):
     'cuad_muldiv :'
     cuad_gen(['/', '*'])
 
+#CREACION DE CUADRUPLO '='
 def p_cuad_asign(p):
     'cuad_asign :'
     global pOperands, pOperators, cuboSemantico, cuadruplos, currentType, currentFunc
@@ -435,7 +463,7 @@ def p_cuad_asign(p):
         print("Type mismatch", idOp['name'], idType, operando['name'], operando['type'], operator)
         sys.exit()
 
-
+#GENERADOR DE CUADRUPLOS DE EXPRESIONES ARITMETICAS, LOGICAS, Y BOOLEANAS
 def cuad_gen(op):
     global pOperands, pOperators, cuboSemantico, cuadruplos, tempCounter, asigna_direccion
     if(len(pOperators) > 0):
@@ -453,6 +481,7 @@ def cuad_gen(op):
                 print("Type Mismatch", right_operando['name'], right_operando['type'], left_operando['name'], left_operando['type'], operator)
                 sys.exit()
 
+#GENERACION DEL CUADRUPLO DE LECTURA
 def p_cuad_read(p):
     'cuad_read :'
     global dirFunc, currentFunc, cuadruplos
@@ -463,6 +492,7 @@ def p_cuad_read(p):
         addr = dirFunc[currentFunc]['varsTable'][p[-1]].get('address')
         cuadruplos.append(['READ', '', '', addr])
 
+#GENERACION DEL CUADRUPLO DE RETURN
 def p_cuad_return(p):
     'cuad_return :'
     global pOperands, pOperators, cuboSemantico, cuadruplos, currentFunc, dirFunc
@@ -474,6 +504,7 @@ def p_cuad_return(p):
         print("Return must be same type as function")
         sys.exit()
 
+#CREACION DE CUADRUPLO PARA GOTOF PARA ESTATUTO-IF ASI COMO VERIFICACION DE TYPO DE RESULTADO DE EXPRESION
 def p_ver_if(p):
     'ver_if :'
     global pOperands, cuadruplos, pSaltos
@@ -485,12 +516,14 @@ def p_ver_if(p):
         cuadruplos.append(['GOTOF', exp['address'], '', ''])
         pSaltos.append(len(cuadruplos) - 1)
 
+#ACTUALIZACION DE CUADRUPLO AL FINAL DE ESTATUTO-IF
 def p_if_end(p):
     'if_end :'
     global pSaltos, cuadruplos
     end = pSaltos.pop()
     cuadruplos[end][3] = len(cuadruplos)
 
+#ACTUALIZACION DE SALTO PARA CONTINUACION DESPUES DE ELSE
 def p_else_jump(p):
     'else_jump :'
     global pSaltos, cuadruplos
@@ -504,6 +537,7 @@ def p_add_jump(p):
     global pSaltos, cuadruplos
     pSaltos.append(len(cuadruplos))
 
+#GENERACION DE CUADRUPLO GOTOF PARA ESTATUTO-WHILE Y VERIFICACION DE TIPO DE EXPRESION 
 def p_ver_while(p):
     'ver_while :'
     global pSaltos, cuadruplos, pOperands
@@ -515,7 +549,7 @@ def p_ver_while(p):
         cuadruplos.append(['GOTOF', exp['address'], '', ''])
         pSaltos.append(len(cuadruplos)-1)
 
-
+#GENERACION DE CUADRUPLO DE REGRESO PARA ESTATUTO-WHILE
 def p_while_end(p):
     'while_end :'
     global pSaltos, cuadruplos
@@ -524,12 +558,14 @@ def p_while_end(p):
     cuadruplos.append(['GOTO', '', '', ret])
     cuadruplos[end][3] = len(cuadruplos)
 
+#GENERACION DE CUADRUPLO PRINT PARA EXPRESIONES
 def p_cuad_print(p):
     'cuad_print :'
     global pOperands, cuadruplos
     result = pOperands.pop()
     cuadruplos.append(['PRINT', '', '', result['address']])
 
+#GENERACION DE CUADRUPLO PRINT PARA CTE STRINGS
 def p_cuad_print_str(p):
     'cuad_print_str :'
     global pOperands, cuadruplos
@@ -542,8 +578,11 @@ def p_change_func(p):
     global currentFunc
     currentFunc = 'global'
 
+############
+#FUNCIONES#
+##########
 
-##Function Declaration##
+#ACTUALIZACION DE TABLA DE PARAMS(EN ORDEN) EN DIRFUNC
 def p_update_param_table(p):
     'update_param_table :'
     global dirFunc, currentFunc, currentType, currentId, paramCount
@@ -552,6 +591,7 @@ def p_update_param_table(p):
     dirFunc[currentFunc]['paramTable'].append([type, addr])
     paramCount += 1
 
+#ACTUALIZACION DE DIRFUNC PARA INCLUIR LA DIRECCION DE INICIO ASI COMO EL NUMERO DE MEMORIA USADO(SUMA DE VARS)
 def p_func_jump(p):
     'func_jump :'
     global dirFunc, cuadruplos, currentFunc, paramCount
@@ -560,6 +600,7 @@ def p_func_jump(p):
     paramCount = 0
     #print(len(cuadruplos), "Numero de cuadruplos")
     
+#GENERACION DE CUADRUPLO DE FIN DE FUNCION
 def p_endFunc(p):
     'endFunc :'
     global cuadruplos, currentFunc, dirFunc, tempCounter, asigna_direccion
@@ -571,6 +612,7 @@ def p_endFunc(p):
 
 ##Function Call - Estatuto
 
+#VERIFICACION DE TIPO DE FUNCION COMO ESTATUTO
 def p_ver_func_id_era(p):
     'ver_func_id_era :'
     global dirFunc, cuadruplos, callFunc
@@ -584,6 +626,7 @@ def p_ver_func_id_era(p):
     else:
         cuadruplos.append(['ERA', '', '', callFunc])
 
+#VERIFICACION TIPO DE FUNCION COMO EXPRESION
 def p_ver_func_id_era_exp(p):
     'ver_func_id_era_exp :'
     global dirFunc, cuadruplos, callFunc
@@ -597,6 +640,7 @@ def p_ver_func_id_era_exp(p):
     else:
         cuadruplos.append(['ERA', '', '', callFunc])
 
+#VERIFICAR TIPO DE PARAMETRO DE LLAMADA CON EL DECLARADO
 def p_ver_param(p):
     'ver_param :'
     global pOperands, cuadruplos, callFunc, paramPtr, dirFunc
@@ -612,6 +656,7 @@ def p_ver_param(p):
         cuadruplos.append(['PARAM', '',argAddr, paramAddr])
         paramPtr += 1
 
+#VERIFICACION DE NUMERO DE PARAMETROS
 def p_ver_param_num(p):
     'ver_param_num :'
     global paramPtr , dirFunc, callFunc
@@ -620,6 +665,7 @@ def p_ver_param_num(p):
         print("Wrong amount of arguments for func", callFunc, "call")
         sys.exit()
 
+#GENERACION DE CUADRUPLO GOSUB
 def p_cuad_gosub(p):
     'cuad_gosub :'
     global cuadruplos, callFunc, dirFunc, paramPtr, pOperands
@@ -636,9 +682,11 @@ def p_cuad_gosub(p):
 
     paramPtr = 0 
 
+##########################
+#VARIABLES DIMENSIONADAS#
+#########################
 
-#Generacion de codigo de Arreglos y Matrices
-
+#DECLARACION DE VARIABLE DIMENSIONADA
 def p_add_dim(p):
     'add_dim :'
     global dirFunc, currentFunc, currentId, constTable
@@ -656,20 +704,20 @@ def p_add_dim(p):
 def p_actAddr(p):
     'actAddr :'
     global dirFunc, currentFunc, currentId, currentType
-    dim = len(dirFunc[currentFunc]['varsTable'][currentId]['dim'])
-    size = 0
-    val1 = dirFunc[currentFunc]['varsTable'][currentId]['dim'][0][0]
-    if(dim == 2):
-        val2 = dirFunc[currentFunc]['varsTable'][currentId]['dim'][1][0]
-        size = val1 * val2
-        asigna_direccion.next_addr_var_dim(currentType, size-1)
-    elif(dim == 1):
-        asigna_direccion.next_addr_var_dim(currentType, val1-1)
+    if(currentType == 'int' or currentType == 'float'):
+        dim = len(dirFunc[currentFunc]['varsTable'][currentId]['dim'])
+        size = 0
+        val1 = dirFunc[currentFunc]['varsTable'][currentId]['dim'][0][0]
+        if(dim == 2):
+            val2 = dirFunc[currentFunc]['varsTable'][currentId]['dim'][1][0]
+            size = val1 * val2
+            asigna_direccion.next_addr_var_dim(currentType, size-1)
+        elif(dim == 1):
+            asigna_direccion.next_addr_var_dim(currentType, val1-1)
+    else:
+        print("Dimensioned Variables can only be int or float type")
+        sys.exit()
 
-
-
-#Declaracion jala, trabajar en llamada!!!
-#Llamada
 
 def p_ver_dim(p):
     'ver_dim :'
@@ -698,13 +746,16 @@ def p_cuad_ver(p):
     valAddr = constTable[val].get('address')
     cuadruplos.append(['VER', '', top, valAddr])
 
-
+#
+#   AQUI
+#
 #Cuadruplo para generar cuadruplo de direccion virtual de indexacion
-#Falta agregar direccion base de arreglos y matrices a tabla de constantes
 def p_cuad_var_dim(p):
     'cuad_var_dim :'
     global dimCounter, pOperands, currentFunc, asigna_direccion, dirFunc, constTable, dimVarAux
     dirBase = dirFunc[currentFunc]['varsTable'][dimVarAux].get('address')
+    type = dirFunc[currentFunc]['varsTable'][dimVarAux].get('type')
+
     if(dirBase not in constTable):
         addr = asigna_direccion.cte_var_addr('int')
         constTable[dirBase] = { 'address' : addr, 'type' : 'int'}
@@ -712,9 +763,10 @@ def p_cuad_var_dim(p):
     if(dimCounter == 1):
         addr = constTable[dirBase].get('address')
         dim1 = pOperands.pop()
-        addrTempDir = asigna_direccion.temp_var_addr('int')
-        cuadruplos.append(['+', dim1.get('address'), addr, addrTempDir])
-        pOperands.append({'name' : 'indexVal', 'type' : 'int', 'address' : addrTempDir})    
+        addrPtrDir = asigna_direccion.pointer_var_addr(type)
+        cuadruplos.append(['+', dim1.get('address'), addr, addrPtrDir])
+        resDir = dim1.get('address') + addr
+        pOperands.append({'name' : 'indexVal', 'type' : 'int', 'address' : addrPtrDir})    
     elif(dimCounter == 2):
         addr = constTable[dirBase].get('address')
         dim2 = pOperands.pop()
@@ -724,16 +776,23 @@ def p_cuad_var_dim(p):
         cuadruplos.append(['*', dim1.get('address'), numCol, addrTempDir])
         addrTempDir2 = asigna_direccion.temp_var_addr('int')
         cuadruplos.append(['+', addrTempDir, dim2.get('address'), addrTempDir2])
-        addrTempDir3 = asigna_direccion.temp_var_addr('int')
+        addrTempDir3 = asigna_direccion.pointer_var_addr(type)
         cuadruplos.append(['+', addrTempDir2, addr, addrTempDir3])
-        pOperands.append({'name' : 'indexVal', 'type' : 'int', 'address' : addrTempDir3})
+        resDir = (dim1.get('address') * numCol + dim2.get('address')) + addr
+        pOperands.append({'name' : resDir, 'type' : 'int', 'address' : addrTempDir3})
     dimCounter = 0
 
+#############
+#INICIO-FIN#
+###########
+
+#ACTUALIZAR PRIMER CUADRUPLO PARA BRINCAR A MAIN
 def p_set_start(p):
     'set_start :'
     global cuadruplos
     cuadruplos[0][3] = len(cuadruplos)
 
+#CREACION DE CUADRUPLO PARA FINAL DE CODIGO
 def p_endProg(p):
     'endProg :'
     global cuadruplos

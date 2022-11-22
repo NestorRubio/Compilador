@@ -1,0 +1,31 @@
+program bubbleSortArreglo;
+
+var int aux, counter, aux2;
+var int arreglo[5];
+
+void main(){
+    counter = 0;
+    arreglo[0] = 15;
+    arreglo[1] = 2;
+    arreglo[2] = 23;
+    arreglo[3] = 46;
+    arreglo[4] = 1;
+
+    while(counter < 5){
+        aux = 0;
+        while(aux < 5 - counter - 1){
+            if(arreglo[aux] > arreglo[aux+1]){
+                aux2 = arreglo[aux];
+                arreglo[aux] = arreglo[aux+1];
+                arreglo[aux+1] = aux2;
+            }
+            aux = aux + 1;
+        }
+        counter = counter + 1;
+    }
+    counter = 0;
+    while(counter < 5){
+        print(arreglo[counter])
+        counter = counter + 1;
+    }
+}

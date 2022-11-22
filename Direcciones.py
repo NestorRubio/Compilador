@@ -27,6 +27,9 @@ class Direcciones:
 
         self.cte_string = str
 
+        self.ptrI = self.cte_string + 2000
+        self.ptrF = self.ptrI + 2000
+
         self.GI = 0
         self.GF = 0
         self.GC = 0
@@ -48,6 +51,9 @@ class Direcciones:
         self.TB = 0
 
         self.CS = 0
+
+        self.PTI = 0
+        self.PTF = 0
 
     def global_var_addr(self, type):
         if(type == 'int'):
@@ -205,6 +211,22 @@ class Direcciones:
                 sys.exit()
             else:
                 self.GB = self.GB + size
+
+    def pointer_var_addr(self, type):
+        if(type == 'int'):
+            if(self.PTI >= self.ptrI + 2000):
+                print("Out of memory")
+                sys.exit()
+            else:
+                self.PTI = self.PTI + 1
+                return self.PTI + self.ptrI - 1
+        elif(type == 'float'):
+            if(self.PTF >= self.ptrF + 2000):
+                print("Out of memory")
+                sys.exit()
+            else:
+                self.PTF = self.PTF + 1
+                return self.PTF + self.ptrF - 1
 
     def reset_local_addr(self):
         self.MI = 0

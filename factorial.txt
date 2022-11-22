@@ -1,7 +1,6 @@
 program factorial;
 
-var int uno, count, factorial_while, factorial_recursion, aux;
- 
+var int uno, count, factorial_while, factorial_recursion, aux; 
 
 func int calcFactorial(int fac, int ret){
     

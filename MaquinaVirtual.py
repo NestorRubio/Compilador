@@ -10,6 +10,8 @@ constTable = {}
 currLevel = 0
 breadCrumb = []
 currentFunc = []
+pointers = {}
+pointVals = {}
 
 intMem = [{}]
 floatMem = [{}]
@@ -37,9 +39,13 @@ for key, info in auxConstTable.items():
 #        return 0
 #    elif(((addr >= 11000 and addr < 13000) or (addr >= 19000 and addr < 21000) or (addr >= 27000 and addr < 29000) or (addr >= 35000 and addr < 37000)) and currentFunc != 'global'):        
 #        return 1
+#memoria res
 
-def update_memory(addr, val):
-    address = int(addr)
+#usar cuadruplos para decidir que se hara. dir ptr esta hasta la derecha solo cuando se le asigna un valor.
+# Cuando tiene 2 valores aparte es porque se esta calculando la direccion+dirbase
+# y solo tiene 1 aparte cuando a la direccion+base se le asigna un valor 
+
+def update_memory(address, val):
     if(address >= 5000 and address < 13000):
         intMem[currLevel][address] = math.floor(val)
     elif(address >= 13000 and address < 21000):
@@ -49,7 +55,24 @@ def update_memory(addr, val):
     elif(address >= 29000 and address < 37000):
         boolMem[currLevel][address] = val
 
+    elif(address >= 39000 and address < 41000): #POINTERS
+        if(cuadruplos[currentCuad][2] == ''): #ASIGNACION DE VALOR
+            realVal = pointers[address]
+            pointVals[realVal] = math.floor(val)
+        elif(cuadruplos[currentCuad][2] != ''): #ASIGNACION DE 'DIRECCION A PARTIR DE DIR BASE' A APUNTADOR
+            pointers[address] = val
+            if val not in pointVals:
+                pointVals[val] = None  
+    elif(address >= 41000 and address < 43000):
+        if(cuadruplos[currentCuad][2] == ''): #ASIGNACION DE VALOR
+            realVal = pointers[address]
+            pointVals[realVal] = val
+        elif(cuadruplos[currentCuad][2] != ''): #ASIGNACION DE 'DIRECCION A PARTIR DE DIR BASE' A APUNTADOR
+            pointers[address] = val
+            if val not in pointVals:
+                pointVals[val] = None 
 
+####Modificar tanto el getval como el update memory para redireccionar cuando la direccion sea mayor a 39000
 #Cuando se llegue al cuadruplo de endfunc en ejecucuion eleiminar nivel actual del dict
 
 def get_val(addr, currentLevel):
@@ -92,6 +115,13 @@ def get_val(addr, currentLevel):
 
     elif(address >= 37000 and address < 39000): #CTE STRING - printables
         val = constTable[address]
+
+    elif(address >= 39000 and address < 41000): #POINTERS
+        aux = pointers[address]
+        val = pointVals[aux]
+    elif(address >= 41000 and address < 43000):
+        aux = pointers[address]
+        val = pointVals[aux]
 
     if(val is None):
         print("No assigned value to variable", addr)
@@ -209,7 +239,7 @@ while(cuadruplos[currentCuad][0] != 'ENDPROG'):
 
     elif(cuadruplos[currentCuad][0] == 'PRINT'):
         printable = get_val(cuadruplos[currentCuad][3], currLevel)
-        if(cuadruplos[currentCuad][3] >= 37000):
+        if(cuadruplos[currentCuad][3] >= 37000 and cuadruplos[currentCuad][3] < 39000):
             printAux = printable.replace('"', '')
             print(printAux)
         else:
@@ -222,20 +252,36 @@ while(cuadruplos[currentCuad][0] != 'ENDPROG'):
         address = cuadruplos[currentCuad][3]
 
         if(address >= 5000 and address < 7000): #Int globales
-            inpAux = int(inp)
-            update_memory(address, inpAux)
+            try:
+                inpAux = int(inp)
+                update_memory(address, inpAux)
+            except:
+                print("Input value must be an integer number")
+                sys.exit()
 
         elif(address >= 7000 and address < 9000): #Int locales
-            inpAux = int(inp)
-            update_memory(address, inpAux)
+            try:
+                inpAux = int(inp)
+                update_memory(address, inpAux)
+            except:
+                print("Input value must be an integer number")
+                sys.exit()
 
         elif(address >= 13000 and address < 15000): #FLoat globales
-            inpAux = float(inp)
-            update_memory(address, inpAux)
+            try:
+                inpAux = float(inp)
+                update_memory(address, inpAux)
+            except:
+                print("Input value must be a number")
+                sys.exit()
 
-        elif(address >= 15000 and address < 17000): #floar locales
-            inpAux = float(inp)
-            update_memory(address, inpAux)
+        elif(address >= 15000 and address < 17000): #float locales
+            try:
+                inpAux = float(inp)
+                update_memory(address, inpAux)
+            except:
+                print("Input value must be a number")
+                sys.exit()
 
         elif(address >= 21000 and address < 23000): #char globales
             inpAux = str(inp)
@@ -283,7 +329,7 @@ while(cuadruplos[currentCuad][0] != 'ENDPROG'):
 
         currentCuad = currentCuad + 1
 
-    elif(cuadruplos[currentCuad][0] == 'PARAM'): ############################REPARAR##########################
+    elif(cuadruplos[currentCuad][0] == 'PARAM'):
 
         val = get_val(cuadruplos[currentCuad][2], currLevel)
         currLevel = currLevel + 1
@@ -317,5 +363,11 @@ while(cuadruplos[currentCuad][0] != 'ENDPROG'):
         del boolMem[currLevel]
         currentFunc.pop()
         currLevel = currLevel - 1
-    #elif(cuadruplos[currentCuad][0] == 'VER'):
-    #    None
+
+    elif(cuadruplos[currentCuad][0] == 'VER'):
+        valEntrada = get_val(cuadruplos[currentCuad][2], currLevel)
+        valLimite = get_val(cuadruplos[currentCuad][3], currLevel)
+        if(valEntrada < 0 or valEntrada >= valLimite):
+            print("Index out of bounds")
+            sys.exit()
+        currentCuad = currentCuad + 1

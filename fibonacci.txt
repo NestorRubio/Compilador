@@ -1,0 +1,49 @@
+program fibonacci;
+
+var int n, res, counter, n1, n2, nth;
+
+func int fibo(int n, int res){
+    if(n < 0){
+        print("Input invalido")
+    }
+    if(n == 0){
+        res = 0;
+    }
+    if(n == 1 || n == 2){
+        res = 1;
+    }
+    if(n > 2){
+        res = fibo(n - 1, res) + fibo(n - 2, res);
+    }
+    return res;
+}
+
+void main(){
+
+    print("Introduzca el termino de fibonacci deseado")
+    read(n)
+
+    n1 = 0;
+    n2 = 1;
+    counter = 0;
+
+    print("Fibonacci Loop")
+    if(n <= 0){
+        print("El valor debe ser un entero positivo")
+    }
+
+    if(n == 1){
+        print(n1)
+    }else{
+        while(counter < n - 1){
+            nth = n1 + n2;
+            n1 = n2;
+            n2 = nth;
+            counter = counter + 1;
+        }
+    }
+    print(n1)
+
+    res = 0;
+    print("Fibonacci Recursion", fibo(n - 1, res))
+}

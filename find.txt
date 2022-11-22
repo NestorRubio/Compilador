@@ -1,0 +1,32 @@
+program find;
+
+var int arr[5];
+
+var int i, count, pos;
+
+void main(){
+
+    count = 0;
+
+    pos = -1;
+
+    arr[0] = 8;
+    arr[1] = 12;
+    arr[2] = 23;
+    arr[3] = -9;
+    arr[4] = 71;
+
+    print("Que valor esta buscando?")
+    read(i)
+
+    while(count < 5){
+        if(i == arr[count]){
+            pos = count;
+            print("Valor encontrado en posicion", pos)
+        }
+        count = count + 1;
+    }
+    if(pos == -1){
+        print("Valor no encontrado :(")
+    }
+}

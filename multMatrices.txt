@@ -1,0 +1,65 @@
+program multMat;
+
+
+var int mat1[3][3];
+var int mat2[3][3];
+var int res[3][3];
+
+var int i, j, k, aux;
+
+void main(){
+
+    i = 0;
+    j = 0;
+    k = 0;
+    aux = 0;
+
+    mat1[0][0] = 12;
+    mat1[0][1] = 7;
+    mat1[0][2] = 3;
+    mat1[1][0] = 4;
+    mat1[1][1] = 5;
+    mat1[1][2] = 6;
+    mat1[2][0] = 7;
+    mat1[2][1] = 8;
+    mat1[2][2] = 9;
+
+    mat2[0][0] = 5;
+    mat2[0][1] = 8;
+    mat2[0][2] = 1;
+    mat2[1][0] = 6;
+    mat2[1][1] = 7;
+    mat2[1][2] = 3;
+    mat2[2][0] = 4;
+    mat2[2][1] = 5;
+    mat2[2][2] = 9;
+
+
+    while(i < 3){
+        while(j < 3){
+            while(k < 3){
+                aux = aux + mat1[i][k] * mat2[k][j];
+                k = k + 1; 
+            }
+            res[i][j] = aux;
+            aux = 0;
+            k = 0;
+            j = j + 1;
+        }
+        j = 0;
+        i = i + 1;
+    }
+
+    
+    i = 0;
+    j = 0;
+
+    while(i < 3){
+        while(j < 3){
+            print(res[i][j])
+            j = j + 1;
+        }
+        j = 0;
+        i = i + 1;
+    }    
+}
